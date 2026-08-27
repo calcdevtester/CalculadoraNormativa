@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Calculadora Normativa</title>
+<meta name="description" content="Calculadora normativa de Celsia: pérdidas de potencia, regulación de tensión y capacidad de cortocircuito en líneas y redes de distribución eléctrica." />
+<meta name="theme-color" content="#fd7930" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#14181c" media="(prefers-color-scheme: dark)" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Calculadora" />
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+<div class="app-shell" id="app-shell">
+  <header class="topbar">
+    <button class="icon-btn nav-toggle-btn" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false"></button>
+    <a class="brand" href="#/">
+      <span class="logo-mark" id="brand-mark"></span>
+      <span>Calculadora normativa</span>
+    </a>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="theme-toggle" aria-label="Cambiar a tema oscuro" aria-pressed="false"></button>
+    </div>
+  </header>
+  <div class="app-body">
+    <nav class="sidebar" id="sidebar" aria-label="Navegación principal">
+      <ul class="nav-list" id="nav-list"></ul>
+    </nav>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <main class="content" id="app" tabindex="-1"></main>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightbox-close" aria-label="Cerrar">✕</button>
+  <img id="lightbox-img" alt="" />
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

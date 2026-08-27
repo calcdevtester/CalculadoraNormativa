@@ -1,0 +1,110 @@
+:root {
+  --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14), 0 4px 10px rgba(15, 23, 42, 0.08);
+
+  --sidebar-w: 250px;
+  --topbar-h: 56px;
+
+  /* --- paleta clara: tomada de capturas reales de apps de Celsia
+     (APP_PowerApps/Referentes_visuales) -- naranja de marca, fondo gris muy
+     claro, tarjetas blancas, texto pizarra oscuro. --- */
+  --bg: #f4f5f7;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #eef0f3;
+  --bg-input: #ffffff;
+  --text: #2b3440;
+  --text-muted: #667085;
+  --text-faint: #98a2b3;
+  --border: #e4e7ec;
+  --border-strong: #cfd4dc;
+
+  --accent: #fd7930;
+  --accent-strong: #b34c0e;
+  --accent-soft: #fff1e6;
+  --accent-contrast: #ffffff;
+
+  --success: #17845c;
+  --success-soft: #e2f6ee;
+  --warning: #92720c;
+  --warning-soft: #fdf6dc;
+  --danger: #c22b34;
+  --danger-soft: #fbe6e6;
+
+  --focus-ring: #fd7930;
+  color-scheme: light;
+}
+
+/* --- paleta oscura: complementaria de marca -- gris carbon/azulado (tomado
+   del sidebar oscuro real de Analitica Celsia) con el mismo naranja
+   aclarado para mantener contraste AA sobre fondo oscuro. --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181c;
+    --bg-elevated: #1e262d;
+    --bg-sunken: #101417;
+    --bg-input: #1a2126;
+    --text: #eef1f4;
+    --text-muted: #a3adb8;
+    --text-faint: #6f7a86;
+    --border: #2c353d;
+    --border-strong: #3e4952;
+
+    --accent: #ff9c56;
+    --accent-strong: #ffb87e;
+    --accent-soft: #3a2313;
+    --accent-contrast: #241206;
+
+    --success: #35c48a;
+    --success-soft: #0f2a20;
+    --warning: #e3b341;
+    --warning-soft: #3d2f10;
+    --danger: #f2766c;
+    --danger-soft: #3a1414;
+
+    --focus-ring: #ff9c56;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14181c;
+  --bg-elevated: #1e262d;
+  --bg-sunken: #101417;
+  --bg-input: #1a2126;
+  --text: #eef1f4;
+  --text-muted: #a3adb8;
+  --text-faint: #6f7a86;
+  --border: #2c353d;
+  --border-strong: #3e4952;
+
+  --accent: #ff9c56;
+  --accent-strong: #ffb87e;
+  --accent-soft: #3a2313;
+  --accent-contrast: #241206;
+
+  --success: #35c48a;
+  --success-soft: #0f2a20;
+  --warning: #e3b341;
+  --warning-soft: #3d2f10;
+  --danger: #f2766c;
+  --danger-soft: #3a1414;
+
+  --focus-ring: #ff9c56;
+  color-scheme: dark;
+}
