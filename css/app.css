@@ -89,9 +89,12 @@ button { font-family: inherit; }
 }
 .nav-link .nav-icon { width: 20px; text-align: center; flex: 0 0 auto; }
 .nav-link:hover { background: var(--bg-sunken); color: var(--text); }
-.nav-link.active { background: var(--accent-soft); color: var(--accent-strong); }
+.nav-link.active { background: var(--accent-surface-bg); color: var(--accent-surface-contrast); }
 
 .content { flex: 1 1 auto; min-width: 0; padding: var(--space-5); max-width: 1100px; margin: 0 auto; width: 100%; }
+
+.view-inicio { display: flex; flex-direction: column; min-height: 100%; }
+.view-inicio-footer { margin-top: auto; padding-top: var(--space-6); }
 
 /* ---------- typography helpers ---------- */
 .page-title { font-size: 1.5rem; font-weight: 800; margin-bottom: var(--space-1); }
@@ -131,7 +134,7 @@ button { font-family: inherit; }
 .menu-tile[aria-disabled="true"] { opacity: 0.55; pointer-events: none; }
 .menu-tile .tile-icon {
   width: 40px; height: 40px; border-radius: var(--radius-sm);
-  background: var(--accent-soft); color: var(--accent-strong);
+  background: var(--accent-surface-bg); color: var(--accent-surface-contrast);
   display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
 }
 .menu-tile .tile-title { font-weight: 700; }
@@ -178,8 +181,8 @@ input:disabled, select:disabled { opacity: 0.55; }
   text-decoration: none;
 }
 .btn:hover { background: var(--bg-sunken); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
-.btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+.btn-primary { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-contrast); }
+.btn-primary:hover { background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); }
 .btn-ghost { background: transparent; border-color: transparent; }
 .btn-ghost:hover { background: var(--bg-sunken); }
 .btn-row { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4); }
@@ -193,14 +196,14 @@ input:disabled, select:disabled { opacity: 0.55; }
   color: var(--text-muted); font-weight: 700; font-size: 0.88rem; cursor: pointer;
   margin-bottom: -1px;
 }
-.tab-btn.active { color: var(--accent-strong); border-bottom-color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 .tab-panel[hidden] { display: none; }
 
 /* ---------- results / formulas ---------- */
 .result-panel { background: var(--accent-soft); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); }
 .result-metric { display: flex; flex-direction: column; gap: 2px; margin-bottom: var(--space-4); }
 .result-metric:last-child { margin-bottom: 0; }
-.result-metric .value { font-size: 1.9rem; font-weight: 800; color: var(--accent-strong); }
+.result-metric .value { font-size: 1.9rem; font-weight: 800; color: var(--accent); }
 .result-metric .value .unit { font-size: 1rem; font-weight: 600; color: var(--text-muted); margin-left: 6px; }
 .result-metric .label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
 .result-metric.hidden-detail { opacity: 0.85; }

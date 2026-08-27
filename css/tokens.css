@@ -22,8 +22,8 @@
   --topbar-h: 56px;
 
   /* --- paleta clara: tomada de capturas reales de apps de Celsia
-     (APP_PowerApps/Referentes_visuales) -- naranja de marca, fondo gris muy
-     claro, tarjetas blancas, texto pizarra oscuro. --- */
+     (APP_PowerApps/Referentes_visuales) -- fondo gris muy claro, tarjetas
+     blancas, texto pizarra oscuro. --- */
   --bg: #f4f5f7;
   --bg-elevated: #ffffff;
   --bg-sunken: #eef0f3;
@@ -34,10 +34,36 @@
   --border: #e4e7ec;
   --border-strong: #cfd4dc;
 
-  --accent: #fd7930;
-  --accent-strong: #b34c0e;
-  --accent-soft: #fff1e6;
+  /* --- naranja de marca: familia del color primario de Colorimetria.png
+     (Pantone 158C / #d5752d), llevado a un naranja rojizo vívido de alto
+     impacto (H≈20°, S≈92%) -- el Pantone 158C puro resulta apagado como
+     color de acento en pantalla. --- */
+  --orange-50: #feeee7;
+  --orange-100: #fddece;
+  --orange-200: #fbbc9d;
+  --orange-300: #f99b6c;
+  --orange-400: #f77a3b;
+  --orange-500: #f55f14;
+  --orange-600: #d74e09;
+  --orange-700: #b04007;
+  --orange-800: #893206;
+  --orange-900: #622304;
+
+  --accent: var(--orange-500);
+  --accent-strong: var(--orange-600);
+  --accent-soft: var(--orange-50);
   --accent-contrast: #ffffff;
+
+  /* botón primario: por defecto igual al acento del tema. En oscuro se
+     redefine aparte (ver bloques de tema oscuro). */
+  --btn-bg: var(--accent);
+  --btn-bg-hover: var(--accent-strong);
+  --btn-contrast: var(--accent-contrast);
+
+  /* chips/íconos activos (nav activo, íconos de módulo): por defecto el
+     fondo suave + acento de siempre. En oscuro se redefine aparte. */
+  --accent-surface-bg: var(--accent-soft);
+  --accent-surface-contrast: var(--accent);
 
   --success: #17845c;
   --success-soft: #e2f6ee;
@@ -46,29 +72,52 @@
   --danger: #c22b34;
   --danger-soft: #fbe6e6;
 
-  --focus-ring: #fd7930;
+  --focus-ring: var(--accent);
   color-scheme: light;
+
+  /* --- terciarios: colores de apoyo de Colorimetria.png, reservados para
+     elementos gráficos (íconos, gráficas, tablas). No usar todavía. --- */
+  --tertiary-blue: #13a2e1;
+  --tertiary-green: #00be91;
+  --tertiary-yellow: #fff65e;
+  --tertiary-blue-dark: #003fa2;
+  --tertiary-red: #ca0045;
 }
 
-/* --- paleta oscura: complementaria de marca -- gris carbon/azulado (tomado
-   del sidebar oscuro real de Analitica Celsia) con el mismo naranja
-   aclarado para mantener contraste AA sobre fondo oscuro. --- */
+/* --- paleta oscura: neutros grises derivados del color secundario de
+   Colorimetria.png (Pantone 425C / #59595b) -- mismo matiz frío casi
+   imperceptible, escalado en luminosidad (más oscuro que la referencia
+   donde hace falta para fondos). Los acentos naranjas reutilizan la misma
+   escala de --orange-* del tema claro, tomando los tonos más claros para
+   mantener contraste AA sobre fondo oscuro. --- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #14181c;
-    --bg-elevated: #1e262d;
-    --bg-sunken: #101417;
-    --bg-input: #1a2126;
-    --text: #eef1f4;
-    --text-muted: #a3adb8;
-    --text-faint: #6f7a86;
-    --border: #2c353d;
-    --border-strong: #3e4952;
+    --bg: #151515;
+    --bg-elevated: #212122;
+    --bg-sunken: #101010;
+    --bg-input: #1b1b1c;
+    --text: #eeeef3;
+    --text-muted: #a8a8ac;
+    --text-faint: #7c7c7f;
+    --border: #2e2e2f;
+    --border-strong: #59595b;
 
-    --accent: #ff9c56;
-    --accent-strong: #ffb87e;
-    --accent-soft: #3a2313;
-    --accent-contrast: #241206;
+    --accent: var(--orange-400);
+    --accent-strong: var(--orange-200);
+    --accent-soft: #3b1502;
+    --accent-contrast: #220c01;
+
+    /* botón primario y superficies activas (nav activo, íconos de módulo):
+       naranja vívido del tema claro (--orange-500, #f55f14) atenuado ~19%
+       (#c74d10) para armonizar sobre fondo oscuro, con texto/ícono blanco
+       -- en vez del --accent aclarado (--orange-400) que usa el resto de
+       acentos (texto de enlaces, tabs, valores de resultado). */
+    --btn-bg: #c74d10;
+    --btn-bg-hover: var(--orange-600);
+    --btn-contrast: #ffffff;
+
+    --accent-surface-bg: #c74d10;
+    --accent-surface-contrast: #ffffff;
 
     --success: #35c48a;
     --success-soft: #0f2a20;
@@ -77,26 +126,33 @@
     --danger: #f2766c;
     --danger-soft: #3a1414;
 
-    --focus-ring: #ff9c56;
+    --focus-ring: var(--accent);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #14181c;
-  --bg-elevated: #1e262d;
-  --bg-sunken: #101417;
-  --bg-input: #1a2126;
-  --text: #eef1f4;
-  --text-muted: #a3adb8;
-  --text-faint: #6f7a86;
-  --border: #2c353d;
-  --border-strong: #3e4952;
+  --bg: #151515;
+  --bg-elevated: #212122;
+  --bg-sunken: #101010;
+  --bg-input: #1b1b1c;
+  --text: #eeeef3;
+  --text-muted: #a8a8ac;
+  --text-faint: #7c7c7f;
+  --border: #2e2e2f;
+  --border-strong: #59595b;
 
-  --accent: #ff9c56;
-  --accent-strong: #ffb87e;
-  --accent-soft: #3a2313;
-  --accent-contrast: #241206;
+  --accent: var(--orange-400);
+  --accent-strong: var(--orange-200);
+  --accent-soft: #3b1502;
+  --accent-contrast: #220c01;
+
+  --btn-bg: #c74d10;
+  --btn-bg-hover: var(--orange-600);
+  --btn-contrast: #ffffff;
+
+  --accent-surface-bg: #c74d10;
+  --accent-surface-contrast: #ffffff;
 
   --success: #35c48a;
   --success-soft: #0f2a20;
@@ -105,6 +161,6 @@
   --danger: #f2766c;
   --danger-soft: #3a1414;
 
-  --focus-ring: #ff9c56;
+  --focus-ring: var(--accent);
   color-scheme: dark;
 }
