@@ -3,7 +3,7 @@
 // cache-first con relleno en segundo plano (stale-while-revalidate) para lo
 // que no estuviera precacheado.
 
-const CACHE_VERSION = "v16";
+const CACHE_VERSION = "v20";
 const CACHE_NAME = `calculadora-normativa-${CACHE_VERSION}`;
 
 const SCOPE = self.registration.scope;
