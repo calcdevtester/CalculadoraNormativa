@@ -6,16 +6,18 @@ import { icon } from "../icons.js";
 import { renderCriterios } from "../util/criterios-render.js";
 import { cortocircuito as CRITERIOS_CORTOCIRCUITO } from "../data/criterios.js";
 
-const FORMULAS_HTML = `I_CC = A · k1 · √( log10((T2+λ)/(T1+λ)) / t ) / 1000     [kA]
+const FORMULAS_HTML = `
+Capacidad de cortocircuito (I_CC):
+I_CC = A · k1 · √( log10((T2+λ)/(T1+λ)) / t ) / 1000     [kA]
 
+Con:
   A  = área del conductor (mm²)
   T1 = temperatura de operación (°C)
   T2 = temperatura máxima admisible en falla (°C)
   t  = tiempo de despeje de la falla (s)
   λ  = temperatura de resistencia cero (típico: 234 Cobre / 228 Aluminio)
   k1 = constante del material (típico: 341 Cobre / 224 Aluminio)
-
-El logaritmo es en base 10.`;
+`;
 
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
@@ -23,8 +25,10 @@ export async function render(container) {
 
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Cortocircuito</span></div>
-    <h1 class="page-title">Cálculo de capacidad de cortocircuito</h1>
-    <p class="page-subtitle">Corriente de cortocircuito admisible de un conductor según el límite térmico durante el tiempo de despeje de la falla.</p>
+    <div class="hero-banner">
+      <h1 class="page-title">Cálculo de capacidad de cortocircuito</h1>
+      <p class="page-subtitle">Corriente de cortocircuito admisible de un conductor según el límite térmico durante el tiempo de despeje de la falla.</p>
+    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -62,8 +66,7 @@ export async function render(container) {
           <input type="number" id="f-constante" min="0" max="500" step="1" required disabled>
           <label class="checkbox-row"><input type="checkbox" id="chk-constante"> Manual</label>
         </div>
-        <span class="hint">Para cobre 341
-Para aluminio 224</span>
+        <span class="hint">Para cobre 341, para aluminio 224</span>
       </div>
 
       <div class="grid-2">
@@ -73,8 +76,7 @@ Para aluminio 224</span>
             <input type="number" id="f-top" min="0" max="500" step="0.1" required disabled>
             <label class="checkbox-row"><input type="checkbox" id="chk-top"> Manual</label>
           </div>
-          <span class="hint">Típicos: aéreos desnudos 75°C
-Cubiertos y subterráneos MT: 90°C</span>
+          <span class="hint">Típicos: aéreos desnudos 75°C, cubiertos y subterráneos MT: 90°C</span>
         </div>
         <div class="field">
           <label for="f-tfalla">Temperatura máxima en falla (°C)</label>
@@ -92,8 +94,7 @@ Cubiertos y subterráneos MT: 90°C</span>
           <input type="number" id="f-temp0" min="0" max="500" step="0.1" required disabled>
           <label class="checkbox-row"><input type="checkbox" id="chk-temp0"> Manual</label>
         </div>
-        <span class="hint">Para cobre 234 °C
-Para aluminio 228 °C</span>
+        <span class="hint">Para cobre 234 °C, para aluminio 228 °C</span>
       </div>
 
       <div class="field">
@@ -118,6 +119,9 @@ Para aluminio 228 °C</span>
   const panelCriterios = container.querySelector("#panel-criterios");
   btnCriterios.addEventListener("click", () => {
     panelCriterios.hidden = !panelCriterios.hidden;
+    if (!panelCriterios.hidden) {
+      panelCriterios.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
 
   const form = container.querySelector("#form-calc");

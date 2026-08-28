@@ -3,7 +3,7 @@
 // cache-first con relleno en segundo plano (stale-while-revalidate) para lo
 // que no estuviera precacheado.
 
-const CACHE_VERSION = "v11";
+const CACHE_VERSION = "v16";
 const CACHE_NAME = `calculadora-normativa-${CACHE_VERSION}`;
 
 const SCOPE = self.registration.scope;
@@ -33,6 +33,7 @@ const APP_SHELL = [
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
+  "assets/celsia_energia_.png",
   "data/conductores-aereos.json",
   "data/conductores-subterraneos.json",
   "vendor/katex/katex.min.js",

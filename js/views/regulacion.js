@@ -10,8 +10,8 @@ const FORMULAS_HTML = `
 Corriente: I = P / (V·cos φ·√3)         [A]
 Potencia aparente: S = P / cos φ        [kVA]
 Potencia reactiva: Q = √(S² − P²)       [kVAR]
-
 Radio medio geométrico: RMG             [m]
+
 Reactancia inductiva: Xl = 0.0754·ln( ∛(Dab·Dac·Dbc) / RMG )     [Ω/km]
 Factor de regulación: Fr = R + Xl·tan φ
 Constante de regulación: K  = Fr / (10·V²)
@@ -25,8 +25,10 @@ export async function render(container) {
 
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Regulación</span></div>
-    <h1 class="page-title">Cálculo de regulación</h1>
-    <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
+    <div class="hero-banner">
+      <h1 class="page-title">Cálculo de regulación</h1>
+      <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
+    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -120,6 +122,9 @@ export async function render(container) {
   const panelCriterios = container.querySelector("#panel-criterios");
   btnCriterios.addEventListener("click", () => {
     panelCriterios.hidden = !panelCriterios.hidden;
+    if (!panelCriterios.hidden) {
+      panelCriterios.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
 
   const form = container.querySelector("#form-calc");

@@ -24,8 +24,10 @@ const MODULOS = [
 export async function render(container) {
   container.innerHTML = `
     <div class="view-inicio">
-      <h1 class="page-title">Calculadora normativa</h1>
-      <p class="page-subtitle">Herramienta de cálculo y verificación conforme a la Norma Técnica de Celsia. Versión 2026.08</p>
+      <div class="hero-banner">
+        <h1 class="page-title">Calculadora normativa</h1>
+        <p class="page-subtitle">Herramienta de cálculo y verificación conforme a la Norma Técnica de Celsia. Versión 2026.08</p>
+      </div>
 
       <h2 class="section-title">Módulos</h2>
       <div class="menu-grid">

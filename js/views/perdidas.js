@@ -23,8 +23,10 @@ export async function render(container) {
 
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Pérdidas</span></div>
-    <h1 class="page-title">Cálculo de pérdidas</h1>
-    <p class="page-subtitle">Corriente, potencia y porcentaje de pérdidas de una línea trifásica, ajustado por factor de carga.</p>
+    <div class="hero-banner">
+      <h1 class="page-title">Cálculo de pérdidas</h1>
+      <p class="page-subtitle">Corriente, potencia y porcentaje de pérdidas de una línea trifásica, ajustado por factor de carga.</p>
+    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -47,8 +49,7 @@ export async function render(container) {
         <div class="field">
           <label for="f-fc">Factor de carga (FC)</label>
           <input type="number" id="f-fc" min="0" max="1" step="0.01" value="1" required>
-          <span class="hint">Circuitos de uso FC=1
-Conexiones solares FC=0.564</span>
+          <span class="hint">Circuitos de uso FC=1, conexiones solares FC=0.564</span>
         </div>
       </div>
 
@@ -103,6 +104,9 @@ Conexiones solares FC=0.564</span>
   const panelCriterios = container.querySelector("#panel-criterios");
   btnCriterios.addEventListener("click", () => {
     panelCriterios.hidden = !panelCriterios.hidden;
+    if (!panelCriterios.hidden) {
+      panelCriterios.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
 
   const form = container.querySelector("#form-calc");
