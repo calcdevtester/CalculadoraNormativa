@@ -3,6 +3,8 @@
 import { fmt, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularCortocircuito } from "../calc/cortocircuito.js";
 import { icon } from "../icons.js";
+import { renderCriterios } from "../util/criterios-render.js";
+import { cortocircuito as CRITERIOS_CORTOCIRCUITO } from "../data/criterios.js";
 
 const FORMULAS_HTML = `I_CC = A · k1 · √( log10((T2+λ)/(T1+λ)) / t ) / 1000     [kA]
 
@@ -23,20 +25,6 @@ export async function render(container) {
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Cortocircuito</span></div>
     <h1 class="page-title">Cálculo de capacidad de cortocircuito</h1>
     <p class="page-subtitle">Corriente de cortocircuito admisible de un conductor según el límite térmico durante el tiempo de despeje de la falla.</p>
-
-    <div class="btn-row" style="margin-top: 0; margin-bottom: var(--space-4);">
-      <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
-    </div>
-
-    <div class="card" id="panel-criterios" hidden style="margin-bottom: var(--space-4);">
-      <h2 class="section-title" style="margin-top:0;">Criterios de cálculo</h2>
-      <div class="image-frame">
-        <img src="assets/criterios/cortocircuito-1.jpg" alt="Criterios de cálculo de cortocircuito (1/2)" data-lightbox="assets/criterios/cortocircuito-1.jpg">
-      </div>
-      <div class="image-frame">
-        <img src="assets/criterios/cortocircuito-2.jpg" alt="Criterios de cálculo de cortocircuito (2/2)" data-lightbox="assets/criterios/cortocircuito-2.jpg">
-      </div>
-    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -115,10 +103,15 @@ Para aluminio 228 °C</span>
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
+        <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
       </div>
     </form>
 
     <div id="resultado-wrap"></div>
+
+    <div class="card" id="panel-criterios" hidden style="margin-top: var(--space-4);">
+      <div class="criterios-content">${renderCriterios(CRITERIOS_CORTOCIRCUITO)}</div>
+    </div>
   `;
 
   const btnCriterios = container.querySelector("#btn-criterios");
@@ -259,7 +252,7 @@ Para aluminio 228 °C</span>
       `Celsia Colombia S.A. E.S.P.`,
       `Cálculo de capacidad de cortocircuito`,
       ``,
-      `-----------------------------------------`,
+      `------------------------`,
       `PARÁMETROS DE ENTRADA:`,
       `Tipo de conductor: ${ctx.red === "Aereo" ? "Aéreo" : "Subterráneo"}`,
       `Material del conductor: ${ctx.material}`,

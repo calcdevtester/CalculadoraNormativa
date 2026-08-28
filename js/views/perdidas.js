@@ -3,20 +3,19 @@
 import { fmt, fmtPercent, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularPerdidas } from "../calc/perdidas.js";
 import { icon } from "../icons.js";
+import { renderCriterios } from "../util/criterios-render.js";
+import { perdidas as CRITERIOS_PERDIDAS } from "../data/criterios.js";
 
-const FORMULAS_HTML = `I = P / (V·cos φ·√3)                      [A]
-S = P / cos φ                             [kVA]
-Q = √(S² − P²)                            [kVAR]
+const FORMULAS_HTML = `
+Corriente: I = P / (V·cos φ·√3)         [A]
+Potencia aparente: S = P / cos φ        [kVA]
+Potencia reactiva: Q = √(S² − P²)       [kVAR]
 
-Fp = 0.7·Fc + 0.3                         (factor de pérdidas, forma lineal)
+Factor de pérdidas: Fp = 0.7·Fc + 0.3 (forma lineal)
+Porcentaje de Pérdidas = (√3·R·L·I·Fp) / (10·V·cos φ)     [%]
 
-% Pérdidas = (√3·R·L·I·Fp) / (10·V·cos φ)
-
-Nota de fidelidad: esta calculadora usa la forma LINEAL del factor de
-pérdidas (0.7·Fc + 0.3), replicando el comportamiento real de la aplicación
-original en producción — no la forma cuadrática clásica de Buller-Woodrow
-(0.7·Fc² + 0.3·Fc) que aparece documentada en el panel de "Criterios de
-cálculo" de esta misma pantalla.`;
+Nota: se usa la forma lineal del factor de pérdidas (0.7·Fc + 0.3), no la forma cuadrática clásica de Buller-Woodrow
+(0.7·Fc² + 0.3·Fc) que aparece documentada en el panel de "Criterios de cálculo".`;
 
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
@@ -26,20 +25,6 @@ export async function render(container) {
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Pérdidas</span></div>
     <h1 class="page-title">Cálculo de pérdidas</h1>
     <p class="page-subtitle">Corriente, potencia y porcentaje de pérdidas de una línea trifásica, ajustado por factor de carga.</p>
-
-    <div class="btn-row" style="margin-top: 0; margin-bottom: var(--space-4);">
-      <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
-    </div>
-
-    <div class="card" id="panel-criterios" hidden style="margin-bottom: var(--space-4);">
-      <h2 class="section-title" style="margin-top:0;">Criterios de cálculo</h2>
-      <div class="image-frame">
-        <img src="assets/criterios/perdidas-1.jpg" alt="Criterios de cálculo de pérdidas (1/2)" data-lightbox="assets/criterios/perdidas-1.jpg">
-      </div>
-      <div class="image-frame">
-        <img src="assets/criterios/perdidas-2.jpg" alt="Criterios de cálculo de pérdidas (2/2)" data-lightbox="assets/criterios/perdidas-2.jpg">
-      </div>
-    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -103,10 +88,15 @@ Conexiones solares FC=0.564</span>
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
+        <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
       </div>
     </form>
 
     <div id="resultado-wrap"></div>
+
+    <div class="card" id="panel-criterios" hidden style="margin-top: var(--space-4);">
+      <div class="criterios-content">${renderCriterios(CRITERIOS_PERDIDAS)}</div>
+    </div>
   `;
 
   const btnCriterios = container.querySelector("#btn-criterios");
@@ -207,7 +197,7 @@ Conexiones solares FC=0.564</span>
       `Celsia Colombia S.A. E.S.P.`,
       `Cálculo de pérdidas`,
       ``,
-      `-----------------------------------------`,
+      `------------------------`,
       `PARÁMETROS DE ENTRADA:`,
       `Nivel de tensión de la línea: ${fmt(p.tensionKv)} kV`,
       `Longitud de la línea: ${fmt(p.longitudKm)} km`,

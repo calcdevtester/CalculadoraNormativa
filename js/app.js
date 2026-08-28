@@ -93,24 +93,6 @@ initRouter({
   },
 });
 
-// --- lightbox global para imagenes de criterios de calculo (delegado en <body>) ---
-const lightbox = document.getElementById("lightbox");
-const lightboxImg = document.getElementById("lightbox-img");
-document.getElementById("lightbox-close").addEventListener("click", () => (lightbox.hidden = true));
-lightbox.addEventListener("click", (e) => {
-  if (e.target === lightbox) lightbox.hidden = true;
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !lightbox.hidden) lightbox.hidden = true;
-});
-document.addEventListener("click", (e) => {
-  const trigger = e.target.closest("[data-lightbox]");
-  if (!trigger) return;
-  lightboxImg.src = trigger.getAttribute("data-lightbox");
-  lightboxImg.alt = trigger.alt || "";
-  lightbox.hidden = false;
-});
-
 // --- Service worker (offline / instalable) ---
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

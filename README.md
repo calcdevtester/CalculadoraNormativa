@@ -100,6 +100,19 @@ creado") y pidió conservar el original tal cual. La versión actual respeta
 eso: nunca reinterpretar/redibujar un asset de marca que el usuario
 proporciona, usar el archivo real.
 
+## Criterios de cálculo
+
+El panel "Criterios de cálculo" de cada módulo (antes imágenes en
+`assets/criterios/*.jpg`) se transcribió a texto real en
+`js/data/criterios.js`, con las fórmulas renderizadas como LaTeX mediante
+[KaTeX](https://katex.org) (alojado localmente en `vendor/katex/`, sin CDN,
+para que la PWA siga funcionando 100% offline). `js/util/criterios-render.js`
+convierte esos bloques a HTML. Para editar el contenido de cualquier módulo
+(texto, fórmulas o tablas) solo hace falta tocar `js/data/criterios.js` — el
+archivo trae un comentario al inicio con la sintaxis de cada tipo de bloque
+y un recordatorio sobre el escape de backslashes en LaTeX dentro de strings
+de JS.
+
 ## Herramientas
 
 - `tools/generate_icons.py` — regenera los cuatro archivos de icono de

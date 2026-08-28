@@ -3,20 +3,21 @@
 import { fmt, fmtPercent, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularRegulacion } from "../calc/regulacion.js";
 import { icon } from "../icons.js";
+import { renderCriterios } from "../util/criterios-render.js";
+import { regulacion as CRITERIOS_REGULACION } from "../data/criterios.js";
 
-const FORMULAS_HTML = `I = P / (V·cos φ·√3)                                    [A]
-S = P / cos φ                                           [kVA]
-Q = √(S² − P²)                                          [kVAR]
+const FORMULAS_HTML = `
+Corriente: I = P / (V·cos φ·√3)         [A]
+Potencia aparente: S = P / cos φ        [kVA]
+Potencia reactiva: Q = √(S² − P²)       [kVAR]
 
-Xl = 0.0754·ln( ∛(Dab·Dac·Dbc) / RMG )                  [Ω/km]  — reactancia inductiva (RMG en m)
-Fr = R + Xl·tan φ                                               — factor de regulación
-K  = Fr / (10·V²)                                               — constante de regulación
+Radio medio geométrico: RMG             [m]
+Reactancia inductiva: Xl = 0.0754·ln( ∛(Dab·Dac·Dbc) / RMG )     [Ω/km]
+Factor de regulación: Fr = R + Xl·tan φ
+Constante de regulación: K  = Fr / (10·V²)
 
 % Caída de tensión = (P·L·Fr) / (10·V²)
-
-Nota: la impedancia efectiva (Z = R·cos φ + Xl·sen φ) es un valor
-intermedio del cálculo original que no se usa en la fórmula final ni se
-muestra en el reporte — se conserva la misma omisión aquí.`;
+`;
 
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
@@ -26,23 +27,6 @@ export async function render(container) {
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Regulación</span></div>
     <h1 class="page-title">Cálculo de regulación</h1>
     <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
-
-    <div class="btn-row" style="margin-top: 0; margin-bottom: var(--space-4);">
-      <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
-    </div>
-
-    <div class="card" id="panel-criterios" hidden style="margin-bottom: var(--space-4);">
-      <h2 class="section-title" style="margin-top:0;">Criterios de cálculo</h2>
-      <div class="image-frame">
-        <img src="assets/criterios/regulacion-1.jpg" alt="Criterios de cálculo de regulación (1/3)" data-lightbox="assets/criterios/regulacion-1.jpg">
-      </div>
-      <div class="image-frame">
-        <img src="assets/criterios/regulacion-2.jpg" alt="Criterios de cálculo de regulación (2/3)" data-lightbox="assets/criterios/regulacion-2.jpg">
-      </div>
-      <div class="image-frame">
-        <img src="assets/criterios/regulacion-3.jpg" alt="Criterios de cálculo de regulación (3/3)" data-lightbox="assets/criterios/regulacion-3.jpg">
-      </div>
-    </div>
 
     <form class="card" id="form-calc" novalidate>
       <div class="grid-2">
@@ -121,10 +105,15 @@ export async function render(container) {
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
+        <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
       </div>
     </form>
 
     <div id="resultado-wrap"></div>
+
+    <div class="card" id="panel-criterios" hidden style="margin-top: var(--space-4);">
+      <div class="criterios-content">${renderCriterios(CRITERIOS_REGULACION)}</div>
+    </div>
   `;
 
   const btnCriterios = container.querySelector("#btn-criterios");
@@ -237,7 +226,7 @@ export async function render(container) {
       `Celsia Colombia S.A. E.S.P.`,
       `Cálculo de regulación`,
       ``,
-      `-----------------------------------------`,
+      `------------------------`,
       `PARÁMETROS DE ENTRADA:`,
       `Nivel de tensión de la línea: ${fmt(p.tensionKv)} kV`,
       `Potencia activa: ${fmt(p.potenciaKw, 0)} kW`,
