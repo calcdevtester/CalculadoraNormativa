@@ -104,7 +104,7 @@
    mantener contraste AA sobre fondo oscuro. --- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #151515;
+    --bg: #101010;
     --bg-elevated: #212122;
     --bg-sunken: #101010;
     --bg-input: #1b1b1c;
@@ -151,7 +151,7 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #151515;
+  --bg: #101010;
   --bg-elevated: #212122;
   --bg-sunken: #101010;
   --bg-input: #1b1b1c;

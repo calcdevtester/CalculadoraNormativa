@@ -235,6 +235,72 @@ export async function render(container) {
     renderResultado(data, p, { red: selRed.value, material: selMaterial.value, calibre: selCalibre.value });
   });
 
+  // Ventana comparativa de calibres alrededor del umbral "aceptable" (10%),
+  // calculada automaticamente con el resultado -- ver misma logica en
+  // js/views/perdidas.js (GAUGE_BREAKPOINTS[1] es el limite normativo real;
+  // el primer breakpoint, 5%, es solo el nivel "optimo").
+  function calcularCandidatosCalibre(p, ctx) {
+    const campo = ctx.red === "Aerea" ? "tipo" : "material_conductor";
+    const areaField = ctx.red === "Aerea" ? "area_seccion_aluminio_mm2" : "area_conductor_mm2";
+    return datasetActivo()
+      .filter(
+        (row) =>
+          row[campo] === ctx.material &&
+          row.calibre_awg_kcmil &&
+          row.r_ac_75c_ohm_km != null &&
+          row.radio_medio_geometrico_mm != null &&
+          row[areaField] != null
+      )
+      .map((row) => {
+        const data = calcularRegulacion({ ...p, resistenciaOhmKm: row.r_ac_75c_ohm_km, rmgMm: row.radio_medio_geometrico_mm });
+        return { calibre: row.calibre_awg_kcmil, area: row[areaField], caidaTensionPct: data.caidaTensionPct };
+      })
+      .sort((a, b) => a.area - b.area);
+  }
+
+  function buildComparacionCalibresHtml(p, ctx) {
+    const candidatos = calcularCandidatosCalibre(p, ctx);
+    if (!candidatos.length) return "";
+
+    const objetivoPct = GAUGE_BREAKPOINTS[1];
+    let idxCumple = candidatos.findIndex((c) => c.caidaTensionPct <= objetivoPct);
+    if (idxCumple === -1) idxCumple = candidatos.length;
+    const desde = Math.max(0, idxCumple - 3);
+    const hasta = Math.min(candidatos.length, idxCumple + 3);
+    const ventana = candidatos.slice(desde, hasta);
+    const sugerido = idxCumple < candidatos.length ? candidatos[idxCumple] : null;
+
+    const mensaje = sugerido
+      ? `Calibre sugerido para no superar ${fmtPercent(objetivoPct)} de caída de tensión: <strong>${escapeHtml(sugerido.calibre)}</strong> (${fmt(sugerido.area)} mm²).`
+      : `Ningún calibre del catálogo baja de ${fmtPercent(objetivoPct)} de caída de tensión con estos datos; el de menor caída es <strong>${escapeHtml(candidatos[candidatos.length - 1].calibre)}</strong>.`;
+
+    const filas = ventana
+      .map((c) => {
+        const clases = [c.calibre === sugerido?.calibre ? "match-row" : "", c.calibre === ctx.calibre ? "current-row" : ""]
+          .filter(Boolean)
+          .join(" ");
+        const etiqueta = c.calibre === ctx.calibre ? ' <span class="badge">Actual</span>' : "";
+        return `
+          <tr class="${clases}">
+            <td>${escapeHtml(c.calibre)}${etiqueta}</td>
+            <td>${fmt(c.area)}</td>
+            <td>${fmtPercent(c.caidaTensionPct)}</td>
+          </tr>`;
+      })
+      .join("");
+
+    return `
+      <div class="result-subhead">Comparación con otros calibres</div>
+      <p class="text-muted text-sm" style="margin: 0 0 var(--space-3);">${mensaje}</p>
+      <div class="table-scroll">
+        <table class="criterios-table">
+          <thead><tr><th>Calibre</th><th>Área (mm²)</th><th>% caída de tensión</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
   function renderResultado(data, p, ctx) {
     const wrap = container.querySelector("#resultado-wrap");
 
@@ -312,6 +378,7 @@ export async function render(container) {
               <span class="label">Constante de regulación</span>
               <span class="value">${fmt(data.intermedios.constanteRegulacion, 7)}</span>
             </div>
+            ${buildComparacionCalibresHtml(p, ctx)}
           </div>
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>

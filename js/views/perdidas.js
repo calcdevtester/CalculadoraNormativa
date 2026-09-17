@@ -41,10 +41,26 @@ export async function render(container) {
             <input type="number" id="f-tension" min="0" max="1000" step="0.1" value="34.5" required>
           </div>
           <div class="field">
-            <label for="f-potencia">Potencia activa (kW)</label>
-            <input type="number" id="f-potencia" min="0" max="500000" step="1" value="10000" required>
-            <span class="hint">Si solo conoce la potencia aparente, ingrésela aquí y utilice FP = 1.</span>
+            <label for="f-modo-entrada">Dato de partida</label>
+            <select id="f-modo-entrada">
+              <option value="potencia">Potencia activa</option>
+              <option value="aparente">Potencia aparente</option>
+              <option value="corriente">Corriente</option>
+            </select>
           </div>
+        </div>
+
+        <div class="field" id="wrap-potencia">
+          <label for="f-potencia">Potencia activa (kW)</label>
+          <input type="number" id="f-potencia" min="0" max="500000" step="1" value="10000" required>
+        </div>
+        <div class="field" id="wrap-aparente" hidden>
+          <label for="f-potencia-aparente">Potencia aparente (kVA)</label>
+          <input type="number" id="f-potencia-aparente" min="0" max="500000" step="1" value="10526">
+        </div>
+        <div class="field" id="wrap-corriente" hidden>
+          <label for="f-corriente">Corriente (A)</label>
+          <input type="number" id="f-corriente" min="0" max="10000" step="0.1" value="176">
         </div>
 
         <div class="grid-2">
@@ -122,6 +138,12 @@ export async function render(container) {
   const form = container.querySelector("#form-calc");
   const fTension = container.querySelector("#f-tension");
   const fPotencia = container.querySelector("#f-potencia");
+  const fPotenciaAparente = container.querySelector("#f-potencia-aparente");
+  const fCorriente = container.querySelector("#f-corriente");
+  const wrapPotencia = container.querySelector("#wrap-potencia");
+  const wrapAparente = container.querySelector("#wrap-aparente");
+  const wrapCorriente = container.querySelector("#wrap-corriente");
+  const selModoEntrada = container.querySelector("#f-modo-entrada");
   const fFp = container.querySelector("#f-fp");
   const fFc = container.querySelector("#f-fc");
   const fLongitud = container.querySelector("#f-longitud");
@@ -132,6 +154,28 @@ export async function render(container) {
   const chkResistencia = container.querySelector("#chk-resistencia");
 
   let filaSeleccionada = null;
+  let modoEntrada = "potencia";
+
+  function setModoEntrada(modo) {
+    modoEntrada = modo;
+    wrapPotencia.hidden = modo !== "potencia";
+    wrapAparente.hidden = modo !== "aparente";
+    wrapCorriente.hidden = modo !== "corriente";
+    fPotencia.required = modo === "potencia";
+    fPotenciaAparente.required = modo === "aparente";
+    fCorriente.required = modo === "corriente";
+  }
+  selModoEntrada.addEventListener("change", () => setModoEntrada(selModoEntrada.value));
+  setModoEntrada("potencia");
+
+  function resolverPotenciaKw() {
+    if (modoEntrada === "aparente") return parseFloat(fPotenciaAparente.value) * parseFloat(fFp.value);
+    if (modoEntrada === "corriente") {
+      const corrienteA = parseFloat(fCorriente.value);
+      return corrienteA * parseFloat(fTension.value) * parseFloat(fFp.value) * Math.sqrt(3);
+    }
+    return parseFloat(fPotencia.value);
+  }
 
   function datasetActivo() {
     return selRed.value === "Aerea" ? aereos : subterraneos;
@@ -192,7 +236,7 @@ export async function render(container) {
 
     const p = {
       tensionKv: parseFloat(fTension.value),
-      potenciaKw: parseFloat(fPotencia.value),
+      potenciaKw: resolverPotenciaKw(),
       factorPotencia: parseFloat(fFp.value),
       resistenciaOhmKm: parseFloat(fResistencia.value),
       longitudKm: parseFloat(fLongitud.value),
@@ -202,6 +246,65 @@ export async function render(container) {
     const data = calcularPerdidas(p);
     renderResultado(data, p, { red: selRed.value, material: selMaterial.value, calibre: selCalibre.value });
   });
+
+  // Ventana comparativa de calibres alrededor del umbral "aceptable" (3%),
+  // calculada automaticamente con el resultado -- no requiere pedir un
+  // objetivo aparte: se centra en GAUGE_BREAKPOINTS[1], el limite normativo
+  // real (el primer breakpoint, 1%, es solo el nivel "optimo").
+  function calcularCandidatosCalibre(p, ctx) {
+    const campo = ctx.red === "Aerea" ? "tipo" : "material_conductor";
+    const areaField = ctx.red === "Aerea" ? "area_seccion_aluminio_mm2" : "area_conductor_mm2";
+    return datasetActivo()
+      .filter((row) => row[campo] === ctx.material && row.calibre_awg_kcmil && row.r_ac_75c_ohm_km != null && row[areaField] != null)
+      .map((row) => {
+        const data = calcularPerdidas({ ...p, resistenciaOhmKm: row.r_ac_75c_ohm_km });
+        return { calibre: row.calibre_awg_kcmil, area: row[areaField], perdidasPct: data.perdidasPct };
+      })
+      .sort((a, b) => a.area - b.area);
+  }
+
+  function buildComparacionCalibresHtml(p, ctx) {
+    const candidatos = calcularCandidatosCalibre(p, ctx);
+    if (!candidatos.length) return "";
+
+    const objetivoPct = GAUGE_BREAKPOINTS[1];
+    let idxCumple = candidatos.findIndex((c) => c.perdidasPct <= objetivoPct);
+    if (idxCumple === -1) idxCumple = candidatos.length;
+    const desde = Math.max(0, idxCumple - 3);
+    const hasta = Math.min(candidatos.length, idxCumple + 3);
+    const ventana = candidatos.slice(desde, hasta);
+    const sugerido = idxCumple < candidatos.length ? candidatos[idxCumple] : null;
+
+    const mensaje = sugerido
+      ? `Calibre sugerido para no superar ${fmtPercent(objetivoPct)} de pérdidas: <strong>${escapeHtml(sugerido.calibre)}</strong> (${fmt(sugerido.area)} mm²).`
+      : `Ningún calibre del catálogo baja de ${fmtPercent(objetivoPct)} de pérdidas con estos datos; el de menor pérdida es <strong>${escapeHtml(candidatos[candidatos.length - 1].calibre)}</strong>.`;
+
+    const filas = ventana
+      .map((c) => {
+        const clases = [c.calibre === sugerido?.calibre ? "match-row" : "", c.calibre === ctx.calibre ? "current-row" : ""]
+          .filter(Boolean)
+          .join(" ");
+        const etiqueta = c.calibre === ctx.calibre ? ' <span class="badge">Actual</span>' : "";
+        return `
+          <tr class="${clases}">
+            <td>${escapeHtml(c.calibre)}${etiqueta}</td>
+            <td>${fmt(c.area)}</td>
+            <td>${fmtPercent(c.perdidasPct)}</td>
+          </tr>`;
+      })
+      .join("");
+
+    return `
+      <div class="result-subhead">Comparación con otros calibres</div>
+      <p class="text-muted text-sm" style="margin: 0 0 var(--space-3);">${mensaje}</p>
+      <div class="table-scroll">
+        <table class="criterios-table">
+          <thead><tr><th>Calibre</th><th>Área (mm²)</th><th>% pérdidas</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    `;
+  }
 
   function renderResultado(data, p, ctx) {
     const wrap = container.querySelector("#resultado-wrap");
@@ -229,9 +332,11 @@ export async function render(container) {
       `Potencia reactiva: ${fmt(data.potenciaQ)} kVAR`,
       `Corriente: ${fmt(data.corriente)} A`,
       `Porcentaje de pérdidas: ${fmt(data.perdidasPct)} %`,
+      `Pérdidas estimadas: ${fmt((data.perdidasPct / 100) * p.potenciaKw)} kW`,
     ].join("\n");
 
     const estado = estadoGauge(data.perdidasPct, GAUGE_BREAKPOINTS);
+    const perdidasKw = (data.perdidasPct / 100) * p.potenciaKw;
     const maxPotencia = Math.max(p.potenciaKw, data.potenciaS, data.potenciaQ) || 1;
     const wActiva = (p.potenciaKw / maxPotencia) * 100;
     const wAparente = (data.potenciaS / maxPotencia) * 100;
@@ -274,6 +379,11 @@ export async function render(container) {
                 <div class="result-gauge-current">${fmt(data.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
             </div>
+            <div class="result-extra-stat">
+              <span class="label">Pérdidas estimadas</span>
+              <span class="value">${fmt(perdidasKw)} kW</span>
+            </div>
+            ${buildComparacionCalibresHtml(p, ctx)}
           </div>
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>

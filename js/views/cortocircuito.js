@@ -106,6 +106,23 @@ export async function render(container) {
         </div>
       </div>
 
+      <div class="form-section card">
+        <div class="form-section-title">${icon("ruler")} Sugerencia de calibre</div>
+        <p class="text-muted text-sm" style="margin: 0 0 var(--space-3);">
+          Indique la corriente de cortocircuito (ICC) que debe soportar el conductor y se sugiere el calibre más económico (menor sección) del mismo tipo de conductor y material seleccionados arriba que la cumple.
+        </p>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-objetivo-icc">ICC requerida (kA)</label>
+            <input type="number" id="f-objetivo-icc" min="0" max="500" step="0.1" value="10">
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top: 0;">
+          <button type="button" class="btn" id="btn-sugerir-calibre">${icon("ruler")} Sugerir calibre</button>
+        </div>
+        <div class="search-result" id="sugerencia-resultado"></div>
+      </div>
+
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
         <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
@@ -143,6 +160,8 @@ export async function render(container) {
   const chkTop = container.querySelector("#chk-top");
   const chkTfalla = container.querySelector("#chk-tfalla");
   const chkTemp0 = container.querySelector("#chk-temp0");
+  const fObjetivoIcc = container.querySelector("#f-objetivo-icc");
+  const btnSugerirCalibre = container.querySelector("#btn-sugerir-calibre");
 
   let filaSeleccionada = null;
 
@@ -251,6 +270,74 @@ export async function render(container) {
     const data = calcularCortocircuito(p);
     renderResultado(data, p, { red: selRed.value, material: selMaterial.value, calibre: selCalibre.value });
   });
+
+  btnSugerirCalibre.addEventListener("click", () => {
+    const objetivoKa = parseFloat(fObjetivoIcc.value);
+    if (!Number.isFinite(objetivoKa)) return;
+    renderSugerenciaCalibre(objetivoKa);
+  });
+
+  function renderSugerenciaCalibre(objetivoKa) {
+    const wrap = container.querySelector("#sugerencia-resultado");
+    const campo = campoMaterial();
+    const material = selMaterial.value;
+    const areaField = selRed.value === "Aereo" ? "area_seccion_aluminio_mm2" : "area_conductor_mm2";
+
+    const constanteK1 = parseFloat(fConstante.value);
+    const tempOperacionC = parseFloat(fTop.value);
+    const tempFallaC = parseFloat(fTfalla.value);
+    const tempResistencia0C = parseFloat(fTemp0.value);
+    const tiempoS = parseFloat(fTiempo.value);
+    const logaritmo = Math.log10((tempFallaC + tempResistencia0C) / (tempOperacionC + tempResistencia0C));
+    const areaRequeridaMm2 = (objetivoKa * 1000) / (constanteK1 * Math.sqrt(logaritmo / tiempoS));
+
+    if (!Number.isFinite(areaRequeridaMm2) || areaRequeridaMm2 <= 0) {
+      wrap.innerHTML = `<div class="callout callout-warning">No se pudo calcular el área requerida con los datos actuales de temperatura y tiempo de falla.</div>`;
+      wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+
+    const candidatos = datasetActivo()
+      .filter((row) => row[campo] === material && row.calibre_awg_kcmil && row[areaField] != null)
+      .map((row) => ({ calibre: row.calibre_awg_kcmil, area: row[areaField] }))
+      .sort((a, b) => a.area - b.area);
+
+    if (!candidatos.length) {
+      wrap.innerHTML = `<div class="callout callout-warning">No hay conductores del tipo de conductor/material seleccionados para comparar.</div>`;
+      wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+
+    const recomendado = candidatos.find((c) => c.area >= areaRequeridaMm2) || null;
+    const mejor = recomendado || candidatos.reduce((max, c) => (c.area > max.area ? c : max), candidatos[0]);
+
+    const mensaje = recomendado
+      ? `<div class="callout callout-success">Calibre sugerido: <strong>${escapeHtml(recomendado.calibre)}</strong> (${fmt(recomendado.area)} mm²) — cumple el área mínima requerida de ${fmt(areaRequeridaMm2)} mm² para ${fmt(objetivoKa)} kA.</div>`
+      : `<div class="callout callout-danger">Ningún calibre disponible alcanza el área mínima requerida de ${fmt(areaRequeridaMm2)} mm² para ${fmt(objetivoKa)} kA. El de mayor sección disponible es <strong>${escapeHtml(mejor.calibre)}</strong> (${fmt(mejor.area)} mm²).</div>`;
+
+    const filas = candidatos.slice(0, 8);
+    const tabla = `
+      <div class="table-scroll">
+        <table class="criterios-table">
+          <thead><tr><th>Calibre</th><th>Área (mm²)</th></tr></thead>
+          <tbody>
+            ${filas
+              .map(
+                (c) => `
+              <tr class="${mejor.calibre === c.calibre ? "match-row" : ""}">
+                <td>${escapeHtml(c.calibre)}</td>
+                <td>${fmt(c.area)}</td>
+              </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    wrap.innerHTML = mensaje + tabla;
+    wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 
   function renderResultado(data, p, ctx) {
     const wrap = container.querySelector("#resultado-wrap");
