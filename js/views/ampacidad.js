@@ -647,7 +647,26 @@ export async function render(container) {
       `T4 (resistencia térmica externa): ${fmt(i.T4, 4)} K·m/W`,
       `Δθ (salto térmico admisible): ${fmt(i.deltaTheta)} °C`,
       `Ampacidad: ${fmt(data.ampacidad)} A`,
-    ].join("\n");
+      i.corrientePantallaA != null ? `Corriente circulante en la pantalla: ${fmt(i.corrientePantallaA)} A` : null,
+      i.tensionInducidaVKm != null ? `Tensión inducida en la pantalla (circuito abierto): ${fmt(i.tensionInducidaVKm)} V/km` : null,
+    ]
+      .filter((line) => line !== null)
+      .join("\n");
+
+    let pantallaHtml = "";
+    if (i.corrientePantallaA != null) {
+      pantallaHtml = `
+        <div class="result-extra-stat">
+          <span class="label">Corriente circulante en la pantalla</span>
+          <span class="value">${fmt(i.corrientePantallaA)} A</span>
+        </div>`;
+    } else if (i.tensionInducidaVKm != null) {
+      pantallaHtml = `
+        <div class="result-extra-stat">
+          <span class="label">Tensión inducida en la pantalla (circuito abierto)</span>
+          <span class="value">${fmt(i.tensionInducidaVKm)} V/km</span>
+        </div>`;
+    }
 
     const reporteHtml = `
       <div class="tab-panel" data-panel="resultado">
@@ -656,6 +675,7 @@ export async function render(container) {
             <div class="value">${fmt(data.ampacidad)}<span class="unit">A</span></div>
             <div class="label">Ampacidad admisible — cable subterráneo</div>
           </div>
+          ${pantallaHtml}
         </div>
       </div>
       <div class="tab-panel" data-panel="reporte" hidden>

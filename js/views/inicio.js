@@ -36,7 +36,7 @@ export async function render(container) {
     <div class="view-inicio">
       <div class="hero-banner">
         <h1 class="page-title">Calculadora normativa</h1>
-        <p class="page-subtitle">Herramienta de cálculo y verificación conforme a la Norma Técnica de Celsia. Versión 2026.08</p>
+        <p class="page-subtitle">Herramienta de cálculo y verificación conforme a la Norma Técnica de Celsia y otros referentes normativos.</p>
       </div>
 
       <h2 class="section-title">Módulos</h2>

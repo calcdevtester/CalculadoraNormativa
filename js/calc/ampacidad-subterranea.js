@@ -92,16 +92,24 @@ export function calcularAmpacidadSubterranea(p) {
     rsEfectivo = 0.000000017241 / (tCinta * wEfectivo);
   }
 
-  // Paso 4 - lambda1 (factor de perdidas en la pantalla)
+  // Paso 4 - lambda1 (factor de perdidas en la pantalla). xm (reactancia
+  // mutua conductor-pantalla) y rsOp (resistencia de pantalla a Tmax) se
+  // calculan siempre que hay pantalla individual por fase (no tripolar):
+  // se reusan mas abajo para la corriente circulante / tension inducida en
+  // la pantalla, independientemente del tipo de puesta a tierra.
   let lambda1;
+  let xm = null;
+  let rsOp = null;
   if (esTripolar) {
     lambda1 = 0.02;
-  } else if (p.puestaTierra === "Ambos Extremos") {
-    const xm = 2 * varOmega * 1e-7 * Math.log((2 * p.separacionFasesM) / cable.ds_m);
-    const rsOp = rsEfectivo * (1 + cable.alpha20 * (p.tempMaxC - 20));
-    lambda1 = (rsOp / varR) * (1 / (1 + (rsOp / xm) ** 2)) + 0.01;
   } else {
-    lambda1 = 0.02; // Unipuntual o Cross-bonding
+    xm = 2 * varOmega * 1e-7 * Math.log((2 * p.separacionFasesM) / cable.ds_m);
+    rsOp = rsEfectivo * (1 + cable.alpha20 * (p.tempMaxC - 20));
+    if (p.puestaTierra === "Ambos Extremos") {
+      lambda1 = (rsOp / varR) * (1 / (1 + (rsOp / xm) ** 2)) + 0.01;
+    } else {
+      lambda1 = 0.02; // Unipuntual o Cross-bonding
+    }
   }
 
   // Paso 5 - resistencias termicas internas (capas del cable)
@@ -140,5 +148,25 @@ export function calcularAmpacidadSubterranea(p) {
     throw err;
   }
 
-  return { ampacidad: Math.sqrt(numerador / denominador), intermedios };
+  const ampacidad = Math.sqrt(numerador / denominador);
+
+  // Corriente circulante en la pantalla (pantallas puestas a tierra en
+  // ambos extremos, circuito cerrado) o tension inducida a circuito
+  // abierto en el extremo sin aterrizar (unipuntual / cross-bonding). No
+  // aplica en cables tripolares (pantalla concentrica comun a las 3 fases).
+  let corrientePantallaA = null;
+  let tensionInducidaVKm = null;
+  if (!esTripolar) {
+    if (p.puestaTierra === "Ambos Extremos") {
+      corrientePantallaA = (ampacidad * xm) / Math.sqrt(rsOp ** 2 + xm ** 2);
+    } else {
+      tensionInducidaVKm = ampacidad * xm * 1000;
+    }
+  }
+  intermedios.xm = xm;
+  intermedios.rsOp = rsOp;
+  intermedios.corrientePantallaA = corrientePantallaA;
+  intermedios.tensionInducidaVKm = tensionInducidaVKm;
+
+  return { ampacidad, intermedios };
 }
