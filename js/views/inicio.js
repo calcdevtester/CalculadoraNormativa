@@ -24,7 +24,7 @@ const MODULOS = [
   },
   {
     title: "Ampacidad",
-    desc: "Capacidad de corriente admisible de un conductor, aéreo o subterráneo.",
+    desc: "Capacidad de corriente admisible de un conductor.",
     iconName: "thermometer",
     tileClass: "tile-icon-ampacidad",
     hash: "#/ampacidad",
