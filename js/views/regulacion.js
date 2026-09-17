@@ -625,17 +625,17 @@ TRAMO ${r.numero}:
           <div class="result-report">
             <div class="result-compare">
               <div class="result-compare-row">
-                <span class="result-compare-label">Activa</span>
+                <span class="result-compare-label">Potencia activa</span>
                 <div class="result-compare-track"><div class="result-compare-fill activa" style="width:${wActiva}%"></div></div>
                 <span class="result-compare-value">${fmt(base.potenciaKw, 0)} kW</span>
               </div>
               <div class="result-compare-row">
-                <span class="result-compare-label">Aparente</span>
+                <span class="result-compare-label">Potencia aparente</span>
                 <div class="result-compare-track"><div class="result-compare-fill aparente" style="width:${wAparente}%"></div></div>
                 <span class="result-compare-value">${fmt(primero.potenciaS)} kVA</span>
               </div>
               <div class="result-compare-row">
-                <span class="result-compare-label">Reactiva</span>
+                <span class="result-compare-label">Potencia reactiva</span>
                 <div class="result-compare-track"><div class="result-compare-fill reactiva" style="width:${wReactiva}%"></div></div>
                 <span class="result-compare-value">${fmt(primero.potenciaQ)} kVAR</span>
               </div>
