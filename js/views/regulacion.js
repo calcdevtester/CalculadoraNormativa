@@ -37,6 +37,18 @@ circuito, es decir, sin cargas intermedias entre tramos).
 
 const TRAMO_COLORS = ["var(--accent)", "var(--tertiary-blue)", "var(--tertiary-green)", "var(--warning)", "var(--danger)"];
 
+// RMG equivalente de un haz de N subconductores identicos, equiespaciados
+// en un arreglo circular (poligono regular) con separacion `separacionM`
+// entre subconductores adyacentes. Se reduce exactamente a las formulas de
+// texto (sqrt(Ds*d), cbrt(Ds*d^2), 1.091*(Ds*d^3)^(1/4)) para N=2,3,4, y se
+// generaliza a cualquier N.
+function calcularRmgHaz(rmgMm, n, separacionM) {
+  if (n <= 1) return rmgMm;
+  const separacionMm = separacionM * 1000;
+  const radioMm = separacionMm / (2 * Math.sin(Math.PI / n));
+  return Math.pow(rmgMm * n * Math.pow(radioMm, n - 1), 1 / n);
+}
+
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
   const subterraneos = await loadData("conductores-subterraneos");
@@ -64,22 +76,25 @@ export async function render(container) {
           </div>
         </div>
 
-        <div class="field" id="wrap-potencia">
-          <label for="f-potencia">Potencia activa (kW)</label>
-          <input type="number" id="f-potencia" min="0" max="500000" step="1" value="10000" required>
-        </div>
-        <div class="field" id="wrap-aparente" hidden>
-          <label for="f-potencia-aparente">Potencia aparente (kVA)</label>
-          <input type="number" id="f-potencia-aparente" min="0" max="500000" step="1" value="10526">
-        </div>
-        <div class="field" id="wrap-corriente" hidden>
-          <label for="f-corriente">Corriente (A)</label>
-          <input type="number" id="f-corriente" min="0" max="10000" step="0.1" value="176">
-        </div>
-
-        <div class="field">
-          <label for="f-fp">Factor de potencia (FP)</label>
-          <input type="number" id="f-fp" min="-1" max="1" step="0.05" value="0.95" required>
+        <div class="grid-2">
+          <div>
+            <div class="field" id="wrap-potencia">
+              <label for="f-potencia">Potencia activa (kW)</label>
+              <input type="number" id="f-potencia" min="0" max="500000" step="1" value="10000" required>
+            </div>
+            <div class="field" id="wrap-aparente" hidden>
+              <label for="f-potencia-aparente">Potencia aparente (kVA)</label>
+              <input type="number" id="f-potencia-aparente" min="0" max="500000" step="1" value="10526">
+            </div>
+            <div class="field" id="wrap-corriente" hidden>
+              <label for="f-corriente">Corriente (A)</label>
+              <input type="number" id="f-corriente" min="0" max="10000" step="0.1" value="176">
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-fp">Factor de potencia (FP)</label>
+            <input type="number" id="f-fp" min="-1" max="1" step="0.05" value="0.95" required>
+          </div>
         </div>
       </div>
 
@@ -153,6 +168,8 @@ export async function render(container) {
       resistenciaOhmKm: null,
       manualRmg: false,
       rmgMm: null,
+      numConductoresPorFase: 1,
+      separacionHazM: 0.4,
       dabM: 1.6,
       dacM: 2.7,
       dbcM: 1.1,
@@ -197,31 +214,45 @@ export async function render(container) {
           </div>
         </div>
 
-        <div class="field">
-          <label for="f-longitud-${id}">Longitud del tramo (km)</label>
-          <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
-        </div>
-
-        <div class="field">
-          <label for="f-calibre-${id}">Calibre del conductor</label>
-          <select id="f-calibre-${id}" required disabled>
-            <option value="">Seleccione un material primero</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-longitud-${id}">Longitud del tramo (km)</label>
+            <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
+          </div>
+          <div class="field">
+            <label for="f-nconductores-${id}">Número de conductores por fase</label>
+            <input type="number" id="f-nconductores-${id}" min="1" max="8" step="1" value="${t.state.numConductoresPorFase}" required>
           </div>
         </div>
 
-        <div class="field">
-          <label for="f-rmg-${id}">Radio medio geométrico (mm)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-rmg-${id}" min="0" max="1000" step="0.01" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-rmg-${id}" ${t.state.manualRmg ? "checked" : ""}> Manual</label>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-calibre-${id}">Calibre del conductor</label>
+            <select id="f-calibre-${id}" required disabled>
+              <option value="">Seleccione un material primero</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
+            <div class="input-with-toggle">
+              <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
+              <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-sephaz-${id}">Separación entre subconductores del haz (m)</label>
+            <input type="number" id="f-sephaz-${id}" min="0.01" max="5" step="0.01" value="${t.state.separacionHazM}" ${t.state.numConductoresPorFase > 1 ? "required" : "disabled"}>
+            <span class="hint">Solo aplica si hay más de un conductor por fase.</span>
+          </div>
+          <div class="field">
+            <label for="f-rmg-${id}">Radio medio geométrico del conductor (mm)</label>
+            <div class="input-with-toggle">
+              <input type="number" id="f-rmg-${id}" min="0" max="1000" step="0.01" required disabled>
+              <label class="checkbox-row"><input type="checkbox" id="chk-rmg-${id}" ${t.state.manualRmg ? "checked" : ""}> Manual</label>
+            </div>
           </div>
         </div>
 
@@ -251,6 +282,8 @@ export async function render(container) {
       const selMaterial = container.querySelector(`#f-material-${id}`);
       const selCalibre = container.querySelector(`#f-calibre-${id}`);
       const fLongitud = container.querySelector(`#f-longitud-${id}`);
+      const fNConductores = container.querySelector(`#f-nconductores-${id}`);
+      const fSepHaz = container.querySelector(`#f-sephaz-${id}`);
       const fResistencia = container.querySelector(`#f-resistencia-${id}`);
       const chkResistencia = container.querySelector(`#chk-resistencia-${id}`);
       const fRmg = container.querySelector(`#f-rmg-${id}`);
@@ -313,6 +346,15 @@ export async function render(container) {
       fLongitud.addEventListener("input", () => {
         t.state.longitudKm = fLongitud.value;
       });
+      fNConductores.addEventListener("input", () => {
+        const n = parseInt(fNConductores.value, 10) || 1;
+        t.state.numConductoresPorFase = n;
+        fSepHaz.disabled = n <= 1;
+        fSepHaz.required = n > 1;
+      });
+      fSepHaz.addEventListener("input", () => {
+        t.state.separacionHazM = fSepHaz.value;
+      });
       chkResistencia.addEventListener("change", () => {
         fResistencia.disabled = !chkResistencia.checked;
         t.state.manualResistencia = chkResistencia.checked;
@@ -352,6 +394,8 @@ export async function render(container) {
         longitudKm: parseFloat(fLongitud.value),
         resistenciaOhmKm: parseFloat(fResistencia.value),
         rmgMm: parseFloat(fRmg.value),
+        numConductoresPorFase: parseInt(fNConductores.value, 10) || 1,
+        separacionHazM: parseFloat(fSepHaz.value) || 0,
         dabM: parseFloat(fDab.value),
         dacM: parseFloat(fDac.value),
         dbcM: parseFloat(fDbc.value),
@@ -396,16 +440,18 @@ export async function render(container) {
 
     const resultadosTramos = tramos.map((t, i) => {
       const estado = t.getEstado();
+      const resistenciaEfectiva = estado.resistenciaOhmKm / estado.numConductoresPorFase;
+      const rmgEfectivo = calcularRmgHaz(estado.rmgMm, estado.numConductoresPorFase, estado.separacionHazM);
       const data = calcularRegulacion({
         ...base,
         longitudKm: estado.longitudKm,
-        resistenciaOhmKm: estado.resistenciaOhmKm,
-        rmgMm: estado.rmgMm,
+        resistenciaOhmKm: resistenciaEfectiva,
+        rmgMm: rmgEfectivo,
         dabM: estado.dabM,
         dacM: estado.dacM,
         dbcM: estado.dbcM,
       });
-      return { numero: i + 1, ...estado, data };
+      return { numero: i + 1, ...estado, resistenciaEfectiva, rmgEfectivo, data };
     });
 
     renderResultado(resultadosTramos, base);
@@ -425,11 +471,13 @@ export async function render(container) {
           row[areaField] != null
       )
       .map((row) => {
+        const resistenciaEfectiva = row.r_ac_75c_ohm_km / ctx.numConductoresPorFase;
+        const rmgEfectivo = calcularRmgHaz(row.radio_medio_geometrico_mm, ctx.numConductoresPorFase, ctx.separacionHazM);
         const data = calcularRegulacion({
           ...base,
           longitudKm: ctx.longitudKm,
-          resistenciaOhmKm: row.r_ac_75c_ohm_km,
-          rmgMm: row.radio_medio_geometrico_mm,
+          resistenciaOhmKm: resistenciaEfectiva,
+          rmgMm: rmgEfectivo,
           dabM: ctx.dabM,
           dacM: ctx.dacM,
           dbcM: ctx.dbcM,
@@ -517,8 +565,12 @@ TRAMO ${r.numero}:
   Material del conductor: ${r.material}
   Calibre del conductor: ${r.calibre} (AWG/kcmil)
   Longitud del tramo: ${fmt(r.longitudKm)} km
-  Resistencia del conductor a 75°C: ${fmt(r.resistenciaOhmKm)} Ω/km
-  Radio medio geométrico del conductor: ${fmt(r.rmgMm)} mm
+  Número de conductores por fase: ${fmt(r.numConductoresPorFase, 0)}
+  Separación entre subconductores del haz: ${r.numConductoresPorFase > 1 ? fmt(r.separacionHazM) + " m" : "N/A (1 conductor)"}
+  Resistencia del conductor a 75°C (por subconductor): ${fmt(r.resistenciaOhmKm)} Ω/km
+  Resistencia efectiva del haz (R/N): ${fmt(r.resistenciaEfectiva)} Ω/km
+  Radio medio geométrico del conductor (por subconductor): ${fmt(r.rmgMm)} mm
+  RMG equivalente del haz: ${fmt(r.rmgEfectivo)} mm
   Distancia entre fases: AB: ${fmt(r.dabM)} m  AC: ${fmt(r.dacM)} m  BC: ${fmt(r.dbcM)} m
   Constante de regulación del tramo: ${fmt(r.data.intermedios.constanteRegulacion, 7)}
   Caída de tensión del tramo: ${fmt(r.data.caidaTensionPct)} %`

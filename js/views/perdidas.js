@@ -151,7 +151,15 @@ export async function render(container) {
   // --- Tramos del conductor -------------------------------------------
   let nextTramoId = 1;
   function nuevoEstadoTramo() {
-    return { red: "Aerea", material: null, calibre: null, longitudKm: 5, manualResistencia: false, resistenciaOhmKm: null };
+    return {
+      red: "Aerea",
+      material: null,
+      calibre: null,
+      longitudKm: 5,
+      manualResistencia: false,
+      resistenciaOhmKm: null,
+      numConductoresPorFase: 1,
+    };
   }
   const tramos = [{ id: 0, state: nuevoEstadoTramo() }];
 
@@ -195,23 +203,31 @@ export async function render(container) {
           </div>
         </div>
 
-        <div class="field">
-          <label for="f-longitud-${id}">Longitud del tramo (km)</label>
-          <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-longitud-${id}">Longitud del tramo (km)</label>
+            <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
+          </div>
+          <div class="field">
+            <label for="f-nconductores-${id}">Número de conductores por fase</label>
+            <input type="number" id="f-nconductores-${id}" min="1" max="8" step="1" value="${t.state.numConductoresPorFase}" required>
+            <span class="hint">Conductores en paralelo (haz). La resistencia efectiva se divide entre este número.</span>
+          </div>
         </div>
 
-        <div class="field">
-          <label for="f-calibre-${id}">Calibre del conductor</label>
-          <select id="f-calibre-${id}" required disabled>
-            <option value="">Seleccione un material primero</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-calibre-${id}">Calibre del conductor</label>
+            <select id="f-calibre-${id}" required disabled>
+              <option value="">Seleccione un material primero</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
+            <div class="input-with-toggle">
+              <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
+              <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+            </div>
           </div>
         </div>
         ${agregarBtn}
@@ -226,6 +242,7 @@ export async function render(container) {
       const selMaterial = container.querySelector(`#f-material-${id}`);
       const selCalibre = container.querySelector(`#f-calibre-${id}`);
       const fLongitud = container.querySelector(`#f-longitud-${id}`);
+      const fNConductores = container.querySelector(`#f-nconductores-${id}`);
       const fResistencia = container.querySelector(`#f-resistencia-${id}`);
       const chkResistencia = container.querySelector(`#chk-resistencia-${id}`);
 
@@ -282,6 +299,9 @@ export async function render(container) {
       fLongitud.addEventListener("input", () => {
         t.state.longitudKm = fLongitud.value;
       });
+      fNConductores.addEventListener("input", () => {
+        t.state.numConductoresPorFase = fNConductores.value;
+      });
       chkResistencia.addEventListener("change", () => {
         fResistencia.disabled = !chkResistencia.checked;
         t.state.manualResistencia = chkResistencia.checked;
@@ -303,6 +323,7 @@ export async function render(container) {
         calibre: selCalibre.value,
         longitudKm: parseFloat(fLongitud.value),
         resistenciaOhmKm: parseFloat(fResistencia.value),
+        numConductoresPorFase: parseInt(fNConductores.value, 10) || 1,
       });
     });
 
@@ -345,8 +366,9 @@ export async function render(container) {
 
     const resultadosTramos = tramos.map((t, i) => {
       const estado = t.getEstado();
-      const data = calcularPerdidas({ ...base, resistenciaOhmKm: estado.resistenciaOhmKm, longitudKm: estado.longitudKm });
-      return { numero: i + 1, ...estado, data };
+      const resistenciaEfectiva = estado.resistenciaOhmKm / estado.numConductoresPorFase;
+      const data = calcularPerdidas({ ...base, resistenciaOhmKm: resistenciaEfectiva, longitudKm: estado.longitudKm });
+      return { numero: i + 1, ...estado, resistenciaEfectiva, data };
     });
 
     renderResultado(resultadosTramos, base);
@@ -359,7 +381,8 @@ export async function render(container) {
     return datasetPara(ctx.red)
       .filter((row) => row[campo] === ctx.material && row.calibre_awg_kcmil && row.r_ac_75c_ohm_km != null && row[areaField] != null)
       .map((row) => {
-        const data = calcularPerdidas({ ...base, resistenciaOhmKm: row.r_ac_75c_ohm_km, longitudKm: ctx.longitudKm });
+        const resistenciaEfectiva = row.r_ac_75c_ohm_km / ctx.numConductoresPorFase;
+        const data = calcularPerdidas({ ...base, resistenciaOhmKm: resistenciaEfectiva, longitudKm: ctx.longitudKm });
         return { calibre: row.calibre_awg_kcmil, area: row[areaField], perdidasPct: data.perdidasPct };
       })
       .sort((a, b) => a.area - b.area);
@@ -445,7 +468,9 @@ TRAMO ${r.numero}:
   Material del conductor: ${r.material}
   Calibre del conductor: ${r.calibre} (AWG/kcmil)
   Longitud del tramo: ${fmt(r.longitudKm)} km
-  Resistencia del conductor a 75°C: ${fmt(r.resistenciaOhmKm)} Ω/km
+  Número de conductores por fase: ${fmt(r.numConductoresPorFase, 0)}
+  Resistencia del conductor a 75°C (por subconductor): ${fmt(r.resistenciaOhmKm)} Ω/km
+  Resistencia efectiva del haz (R/N): ${fmt(r.resistenciaEfectiva)} Ω/km
   Porcentaje de pérdidas del tramo: ${fmt(r.data.perdidasPct)} %
   Pérdidas estimadas del tramo: ${fmt(r.perdidasKw)} kW`
       )
