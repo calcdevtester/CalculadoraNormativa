@@ -22,6 +22,13 @@ const MODULOS = [
     tileClass: "tile-icon-cortocircuito",
     hash: "#/cortocircuito",
   },
+  {
+    title: "Ampacidad",
+    desc: "Capacidad de corriente admisible de un conductor, aéreo o subterráneo.",
+    iconName: "thermometer",
+    tileClass: "tile-icon-ampacidad",
+    hash: "#/ampacidad",
+  },
 ];
 
 export async function render(container) {

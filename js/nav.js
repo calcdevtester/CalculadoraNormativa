@@ -1,11 +1,12 @@
 // Configuracion de navegacion: equivalente a NavStructure en App.pa.yaml.
-// "Ampacidad" y "Salir" existen en el original pero estaban deshabilitado
-// (Ampacidad, comentado/oculto) o sin equivalente en una PWA (Salir cierra
-// la app nativa) -- no se incluyen aqui, ver README.
+// "Salir" existe en el original pero no tiene equivalente en una PWA (cierra
+// la app nativa) -- no se incluye aqui. Ampacidad si existia deshabilitada en
+// el original; aqui se implementa como modulo propio (ver README).
 
 export const sidebarLinks = [
   { key: "", title: "Inicio", icon: "home", hash: "#/" },
   { key: "perdidas", title: "Pérdidas", icon: "money", hash: "#/perdidas" },
   { key: "regulacion", title: "Regulación", icon: "calculator", hash: "#/regulacion" },
   { key: "cortocircuito", title: "Cortocircuito", icon: "bolt", hash: "#/cortocircuito" },
+  { key: "ampacidad", title: "Ampacidad", icon: "thermometer", hash: "#/ampacidad" },
 ];

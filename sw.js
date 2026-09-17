@@ -3,7 +3,7 @@
 // cache-first con relleno en segundo plano (stale-while-revalidate) para lo
 // que no estuviera precacheado.
 
-const CACHE_VERSION = "v20";
+const CACHE_VERSION = "v21";
 const CACHE_NAME = `calculadora-normativa-${CACHE_VERSION}`;
 
 const SCOPE = self.registration.scope;
@@ -21,14 +21,18 @@ const APP_SHELL = [
   "js/icons.js",
   "js/util/format.js",
   "js/util/criterios-render.js",
+  "js/util/gauge.js",
   "js/data/criterios.js",
   "js/calc/perdidas.js",
   "js/calc/regulacion.js",
   "js/calc/cortocircuito.js",
+  "js/calc/ampacidad-aerea.js",
+  "js/calc/ampacidad-subterranea.js",
   "js/views/inicio.js",
   "js/views/perdidas.js",
   "js/views/regulacion.js",
   "js/views/cortocircuito.js",
+  "js/views/ampacidad.js",
   "icons/icon.svg",
   "icons/icon-192.png",
   "icons/icon-512.png",
@@ -36,6 +40,7 @@ const APP_SHELL = [
   "assets/celsia_energia_.png",
   "data/conductores-aereos.json",
   "data/conductores-subterraneos.json",
+  "data/construccion-cable-subterraneo.json",
   "vendor/katex/katex.min.js",
   "vendor/katex/katex.min.css",
   "vendor/katex/fonts/KaTeX_AMS-Regular.woff2",

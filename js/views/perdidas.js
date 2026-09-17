@@ -1,4 +1,11 @@
 // Calculadora de perdidas de potencia por efecto Joule en una linea trifasica.
+// Soporta circuitos con varios tramos (aereos y/o subterraneos): cada tramo
+// tiene su propio tipo de red/material/calibre/longitud, y las perdidas de
+// cada tramo se suman para dar el resultado total del circuito. Corriente,
+// potencia aparente y potencia reactiva son las mismas para todos los tramos
+// (dependen solo de P, V y FP -- no cambian con R ni L), asumiendo que la
+// corriente es la misma a lo largo de todo el circuito (sin cargas
+// intermedias entre tramos).
 
 import { fmt, fmtPercent, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularPerdidas } from "../calc/perdidas.js";
@@ -13,7 +20,11 @@ Potencia aparente: S = P / cos φ        [kVA]
 Potencia reactiva: Q = √(S² − P²)       [kVAR]
 
 Factor de pérdidas: Fp = 0.7·Fc + 0.3 (forma lineal)
-Porcentaje de Pérdidas = (√3·R·L·I·Fp) / (10·V·cos φ)     [%]
+Porcentaje de Pérdidas (por tramo) = (√3·R·L·I·Fp) / (10·V·cos φ)     [%]
+
+Para circuitos de varios tramos, el % de pérdidas total es la suma del % de
+cada tramo (válido cuando la corriente es la misma en todo el circuito, es
+decir, sin cargas intermedias entre tramos).
 
 Nota: se usa la forma lineal del factor de pérdidas (0.7·Fc + 0.3), no la forma cuadrática clásica de Buller-Woodrow (0.7·Fc² + 0.3·Fc) que aparece documentada en el panel de "Criterios de cálculo".`;
 
@@ -23,6 +34,8 @@ Nota: se usa la forma lineal del factor de pérdidas (0.7·Fc + 0.3), no la form
 const GAUGE_MAX = 5;
 const GAUGE_BREAKPOINTS = [1, 3];
 
+const TRAMO_COLORS = ["var(--accent)", "var(--tertiary-blue)", "var(--tertiary-green)", "var(--warning)", "var(--danger)"];
+
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
   const subterraneos = await loadData("conductores-subterraneos");
@@ -30,7 +43,7 @@ export async function render(container) {
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Pérdidas</span></div>
     <h1 class="page-title">Cálculo de pérdidas</h1>
-    <p class="page-subtitle">Corriente, potencia y porcentaje de pérdidas de una línea trifásica, ajustado por factor de carga.</p>
+    <p class="page-subtitle">Corriente, potencia y porcentaje de pérdidas de una línea trifásica, ajustado por factor de carga. Soporta circuitos de varios tramos.</p>
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
@@ -74,44 +87,9 @@ export async function render(container) {
             <span class="hint">Circuitos de uso FC=1, conexiones solares FC=0.564</span>
           </div>
         </div>
-
-        <div class="field">
-          <label for="f-longitud">Longitud de la línea (km)</label>
-          <input type="number" id="f-longitud" min="0" max="500" step="0.1" value="5" required>
-        </div>
       </div>
 
-      <div class="form-section card">
-        <div class="form-section-title">${icon("calculator")} Conductor</div>
-        <div class="grid-2">
-          <div class="field">
-            <label for="f-red">Tipo de red</label>
-            <select id="f-red" required>
-              <option value="Aerea">Aérea</option>
-              <option value="Subterranea">Subterránea</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-material">Material del conductor</label>
-            <select id="f-material" required></select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="f-calibre">Calibre del conductor</label>
-          <select id="f-calibre" required disabled>
-            <option value="">Seleccione un material primero</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="f-resistencia">R Conductor a 75° (Ω/km)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-resistencia" min="0" max="1000" step="0.001" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia"> Manual</label>
-          </div>
-        </div>
-      </div>
+      <div id="tramos-container"></div>
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
@@ -146,14 +124,7 @@ export async function render(container) {
   const selModoEntrada = container.querySelector("#f-modo-entrada");
   const fFp = container.querySelector("#f-fp");
   const fFc = container.querySelector("#f-fc");
-  const fLongitud = container.querySelector("#f-longitud");
-  const selRed = container.querySelector("#f-red");
-  const selMaterial = container.querySelector("#f-material");
-  const selCalibre = container.querySelector("#f-calibre");
-  const fResistencia = container.querySelector("#f-resistencia");
-  const chkResistencia = container.querySelector("#chk-resistencia");
 
-  let filaSeleccionada = null;
   let modoEntrada = "potencia";
 
   function setModoEntrada(modo) {
@@ -177,94 +148,225 @@ export async function render(container) {
     return parseFloat(fPotencia.value);
   }
 
-  function datasetActivo() {
-    return selRed.value === "Aerea" ? aereos : subterraneos;
+  // --- Tramos del conductor -------------------------------------------
+  let nextTramoId = 1;
+  function nuevoEstadoTramo() {
+    return { red: "Aerea", material: null, calibre: null, longitudKm: 5, manualResistencia: false, resistenciaOhmKm: null };
   }
-  function campoMaterial() {
-    return selRed.value === "Aerea" ? "tipo" : "material_conductor";
-  }
+  const tramos = [{ id: 0, state: nuevoEstadoTramo() }];
 
-  function poblarMaterial() {
-    const opciones = distinct(datasetActivo(), campoMaterial());
-    selMaterial.innerHTML = opciones.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-    poblarCalibre();
+  function datasetPara(red) {
+    return red === "Aerea" ? aereos : subterraneos;
   }
-
-  function poblarCalibre() {
-    const campo = campoMaterial();
-    const material = selMaterial.value;
-    const calibres = distinct(
-      datasetActivo().filter((c) => c[campo] === material),
-      "calibre_awg_kcmil"
-    );
-    selCalibre.innerHTML = calibres.length
-      ? `<option value="">Seleccione…</option>` + calibres.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")
-      : `<option value="">Sin calibres disponibles</option>`;
-    selCalibre.disabled = !calibres.length;
-    filaSeleccionada = null;
-    syncDefaults();
+  function campoMaterialPara(red) {
+    return red === "Aerea" ? "tipo" : "material_conductor";
   }
 
-  function resolverFila() {
-    const campo = campoMaterial();
-    const material = selMaterial.value;
-    const calibre = selCalibre.value;
-    if (!calibre) return null;
-    return datasetActivo().find((c) => c[campo] === material && c.calibre_awg_kcmil === calibre) || null;
+  // Cada tramo persiste su seleccion en t.state; al re-renderizar (por
+  // agregar/quitar otro tramo) las tarjetas existentes recrean su DOM pero
+  // restauran los valores ya elegidos, en vez de resetear a los defaults.
+  function renderTramoHtml(t, index) {
+    const id = t.id;
+    const num = index + 1;
+    const esUltimo = index === tramos.length - 1;
+    const quitarBtn =
+      tramos.length > 1
+        ? `<button type="button" class="btn btn-ghost btn-tramo-quitar" data-id="${id}" style="margin-left:auto; padding:2px 8px; font-size:0.72rem; text-transform:none; letter-spacing:normal;">${icon("close")} Quitar</button>`
+        : "";
+    const agregarBtn = esUltimo
+      ? `<div class="btn-row" style="margin-top: var(--space-4);">
+          <button type="button" class="btn btn-agregar-tramo">${icon("plus")} Agregar nuevo tramo</button>
+        </div>`
+      : "";
+    return `
+      <div class="form-section card tramo-block" data-id="${id}">
+        <div class="form-section-title">${icon("calculator")} Conductor — Tramo ${num}${quitarBtn}</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-red-${id}">Tipo de red</label>
+            <select id="f-red-${id}" required>
+              <option value="Aerea" ${t.state.red === "Aerea" ? "selected" : ""}>Aérea</option>
+              <option value="Subterranea" ${t.state.red === "Subterranea" ? "selected" : ""}>Subterránea</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-material-${id}">Material del conductor</label>
+            <select id="f-material-${id}" required></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-longitud-${id}">Longitud del tramo (km)</label>
+          <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
+        </div>
+
+        <div class="field">
+          <label for="f-calibre-${id}">Calibre del conductor</label>
+          <select id="f-calibre-${id}" required disabled>
+            <option value="">Seleccione un material primero</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+          </div>
+        </div>
+        ${agregarBtn}
+      </div>
+    `;
   }
 
-  function syncDefaults() {
-    if (!chkResistencia.checked) fResistencia.value = filaSeleccionada ? filaSeleccionada.r_ac_75c_ohm_km : "";
+  function bindTramoEvents() {
+    tramos.forEach((t) => {
+      const id = t.id;
+      const selRed = container.querySelector(`#f-red-${id}`);
+      const selMaterial = container.querySelector(`#f-material-${id}`);
+      const selCalibre = container.querySelector(`#f-calibre-${id}`);
+      const fLongitud = container.querySelector(`#f-longitud-${id}`);
+      const fResistencia = container.querySelector(`#f-resistencia-${id}`);
+      const chkResistencia = container.querySelector(`#chk-resistencia-${id}`);
+
+      function poblarMaterial() {
+        const opciones = distinct(datasetPara(selRed.value), campoMaterialPara(selRed.value));
+        selMaterial.innerHTML = opciones.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+        if (t.state.material && opciones.includes(t.state.material)) selMaterial.value = t.state.material;
+        else t.state.material = selMaterial.value || null;
+        poblarCalibre();
+      }
+      function poblarCalibre() {
+        const campo = campoMaterialPara(selRed.value);
+        const material = selMaterial.value;
+        const calibres = distinct(
+          datasetPara(selRed.value).filter((c) => c[campo] === material),
+          "calibre_awg_kcmil"
+        );
+        selCalibre.innerHTML = calibres.length
+          ? `<option value="">Seleccione…</option>` + calibres.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")
+          : `<option value="">Sin calibres disponibles</option>`;
+        selCalibre.disabled = !calibres.length;
+        if (t.state.calibre && calibres.includes(t.state.calibre)) selCalibre.value = t.state.calibre;
+        else t.state.calibre = null;
+        t.filaSeleccionada = resolverFila();
+        syncDefaults();
+      }
+      function resolverFila() {
+        const campo = campoMaterialPara(selRed.value);
+        const material = selMaterial.value;
+        const calibre = selCalibre.value;
+        if (!calibre) return null;
+        return datasetPara(selRed.value).find((c) => c[campo] === material && c.calibre_awg_kcmil === calibre) || null;
+      }
+      function syncDefaults() {
+        if (!chkResistencia.checked) fResistencia.value = t.filaSeleccionada ? t.filaSeleccionada.r_ac_75c_ohm_km : "";
+      }
+
+      selRed.addEventListener("change", () => {
+        t.state.red = selRed.value;
+        t.state.material = null;
+        t.state.calibre = null;
+        poblarMaterial();
+      });
+      selMaterial.addEventListener("change", () => {
+        t.state.material = selMaterial.value;
+        t.state.calibre = null;
+        poblarCalibre();
+      });
+      selCalibre.addEventListener("change", () => {
+        t.state.calibre = selCalibre.value;
+        t.filaSeleccionada = resolverFila();
+        syncDefaults();
+      });
+      fLongitud.addEventListener("input", () => {
+        t.state.longitudKm = fLongitud.value;
+      });
+      chkResistencia.addEventListener("change", () => {
+        fResistencia.disabled = !chkResistencia.checked;
+        t.state.manualResistencia = chkResistencia.checked;
+        if (!chkResistencia.checked) syncDefaults();
+      });
+      fResistencia.addEventListener("input", () => {
+        if (chkResistencia.checked) t.state.resistenciaOhmKm = fResistencia.value;
+      });
+
+      fResistencia.disabled = !chkResistencia.checked;
+      poblarMaterial();
+      if (chkResistencia.checked && t.state.resistenciaOhmKm != null) {
+        fResistencia.value = t.state.resistenciaOhmKm;
+      }
+
+      t.getEstado = () => ({
+        red: selRed.value,
+        material: selMaterial.value,
+        calibre: selCalibre.value,
+        longitudKm: parseFloat(fLongitud.value),
+        resistenciaOhmKm: parseFloat(fResistencia.value),
+      });
+    });
+
+    container.querySelectorAll(".btn-tramo-quitar").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.dataset.id, 10);
+        const idx = tramos.findIndex((t) => t.id === id);
+        if (idx !== -1) tramos.splice(idx, 1);
+        renderTramos();
+      });
+    });
+
+    const btnAgregar = container.querySelector(".btn-agregar-tramo");
+    if (btnAgregar) {
+      btnAgregar.addEventListener("click", () => {
+        tramos.push({ id: nextTramoId++, state: nuevoEstadoTramo() });
+        renderTramos();
+      });
+    }
   }
 
-  selRed.addEventListener("change", poblarMaterial);
-  selMaterial.addEventListener("change", poblarCalibre);
-  selCalibre.addEventListener("change", () => {
-    filaSeleccionada = resolverFila();
-    syncDefaults();
-  });
-  chkResistencia.addEventListener("change", () => {
-    fResistencia.disabled = !chkResistencia.checked;
-    if (!chkResistencia.checked) syncDefaults();
-  });
+  function renderTramos() {
+    const cont = container.querySelector("#tramos-container");
+    cont.innerHTML = tramos.map((t, i) => renderTramoHtml(t, i)).join("");
+    bindTramoEvents();
+  }
 
-  poblarMaterial();
+  renderTramos();
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
 
-    const p = {
+    const base = {
       tensionKv: parseFloat(fTension.value),
       potenciaKw: resolverPotenciaKw(),
       factorPotencia: parseFloat(fFp.value),
-      resistenciaOhmKm: parseFloat(fResistencia.value),
-      longitudKm: parseFloat(fLongitud.value),
       factorCarga: parseFloat(fFc.value),
     };
 
-    const data = calcularPerdidas(p);
-    renderResultado(data, p, { red: selRed.value, material: selMaterial.value, calibre: selCalibre.value });
+    const resultadosTramos = tramos.map((t, i) => {
+      const estado = t.getEstado();
+      const data = calcularPerdidas({ ...base, resistenciaOhmKm: estado.resistenciaOhmKm, longitudKm: estado.longitudKm });
+      return { numero: i + 1, ...estado, data };
+    });
+
+    renderResultado(resultadosTramos, base);
   });
 
-  // Ventana comparativa de calibres alrededor del umbral "aceptable" (3%),
-  // calculada automaticamente con el resultado -- no requiere pedir un
-  // objetivo aparte: se centra en GAUGE_BREAKPOINTS[1], el limite normativo
-  // real (el primer breakpoint, 1%, es solo el nivel "optimo").
-  function calcularCandidatosCalibre(p, ctx) {
-    const campo = ctx.red === "Aerea" ? "tipo" : "material_conductor";
+  // --- Sugerencia de calibre (solo tiene sentido con un unico tramo) ---
+  function calcularCandidatosCalibre(base, ctx) {
+    const campo = campoMaterialPara(ctx.red);
     const areaField = ctx.red === "Aerea" ? "area_seccion_aluminio_mm2" : "area_conductor_mm2";
-    return datasetActivo()
+    return datasetPara(ctx.red)
       .filter((row) => row[campo] === ctx.material && row.calibre_awg_kcmil && row.r_ac_75c_ohm_km != null && row[areaField] != null)
       .map((row) => {
-        const data = calcularPerdidas({ ...p, resistenciaOhmKm: row.r_ac_75c_ohm_km });
+        const data = calcularPerdidas({ ...base, resistenciaOhmKm: row.r_ac_75c_ohm_km, longitudKm: ctx.longitudKm });
         return { calibre: row.calibre_awg_kcmil, area: row[areaField], perdidasPct: data.perdidasPct };
       })
       .sort((a, b) => a.area - b.area);
   }
 
-  function buildComparacionCalibresHtml(p, ctx) {
-    const candidatos = calcularCandidatosCalibre(p, ctx);
+  function buildComparacionCalibresHtml(base, ctx) {
+    const candidatos = calcularCandidatosCalibre(base, ctx);
     if (!candidatos.length) return "";
 
     const objetivoPct = GAUGE_BREAKPOINTS[1];
@@ -306,8 +408,48 @@ export async function render(container) {
     `;
   }
 
-  function renderResultado(data, p, ctx) {
+  function buildResumenTramosHtml(resultadosTramos) {
+    const maxKw = Math.max(...resultadosTramos.map((r) => r.perdidasKw)) || 1;
+    const filas = resultadosTramos
+      .map((r, i) => {
+        const color = TRAMO_COLORS[i % TRAMO_COLORS.length];
+        const ancho = (r.perdidasKw / maxKw) * 100;
+        return `
+          <div class="result-compare-row">
+            <span class="result-compare-label">Tramo ${r.numero}</span>
+            <div class="result-compare-track"><div class="result-compare-fill" style="width:${ancho}%; background:${color};"></div></div>
+            <span class="result-compare-value">${fmtPercent(r.data.perdidasPct)} · ${fmt(r.perdidasKw)} kW</span>
+          </div>`;
+      })
+      .join("");
+
+    return `
+      <div class="result-subhead">Pérdidas por tramo</div>
+      <div class="result-compare">${filas}</div>
+    `;
+  }
+
+  function renderResultado(resultadosTramos, base) {
     const wrap = container.querySelector("#resultado-wrap");
+
+    const conDatos = resultadosTramos.map((r) => ({ ...r, perdidasKw: (r.data.perdidasPct / 100) * base.potenciaKw }));
+    const primero = conDatos[0].data;
+    const perdidasPctTotal = conDatos.reduce((sum, r) => sum + r.data.perdidasPct, 0);
+    const perdidasKwTotal = conDatos.reduce((sum, r) => sum + r.perdidasKw, 0);
+
+    const reporteTramos = conDatos
+      .map(
+        (r) => `
+TRAMO ${r.numero}:
+  Tipo de red: ${r.red === "Aerea" ? "Aérea" : "Subterránea"}
+  Material del conductor: ${r.material}
+  Calibre del conductor: ${r.calibre} (AWG/kcmil)
+  Longitud del tramo: ${fmt(r.longitudKm)} km
+  Resistencia del conductor a 75°C: ${fmt(r.resistenciaOhmKm)} Ω/km
+  Porcentaje de pérdidas del tramo: ${fmt(r.data.perdidasPct)} %
+  Pérdidas estimadas del tramo: ${fmt(r.perdidasKw)} kW`
+      )
+      .join("\n");
 
     const reporte = [
       `CALCULADORA NORMATIVA 2026`,
@@ -316,31 +458,30 @@ export async function render(container) {
       ``,
       `------------------------`,
       `PARÁMETROS DE ENTRADA:`,
-      `Nivel de tensión de la línea: ${fmt(p.tensionKv)} kV`,
-      `Longitud de la línea: ${fmt(p.longitudKm)} km`,
-      `Potencia activa: ${fmt(p.potenciaKw, 0)} kW`,
-      `Factor de potencia: ${fmt(p.factorPotencia)}`,
-      `Factor de carga: ${fmt(p.factorCarga)}`,
-      `Tipo de red: ${ctx.red === "Aerea" ? "Aérea" : "Subterránea"}`,
-      `Material del conductor: ${ctx.material}`,
-      `Calibre del conductor: ${ctx.calibre} (AWG/kcmil)`,
-      `Resistencia del conductor a 75°C: ${fmt(p.resistenciaOhmKm)} Ω/km`,
+      `Nivel de tensión de la línea: ${fmt(base.tensionKv)} kV`,
+      `Potencia activa: ${fmt(base.potenciaKw, 0)} kW`,
+      `Factor de potencia: ${fmt(base.factorPotencia)}`,
+      `Factor de carga: ${fmt(base.factorCarga)}`,
+      reporteTramos,
       ``,
       `-------------------`,
-      `RESULTADOS:`,
-      `Potencia aparente: ${fmt(data.potenciaS)} kVA`,
-      `Potencia reactiva: ${fmt(data.potenciaQ)} kVAR`,
-      `Corriente: ${fmt(data.corriente)} A`,
-      `Porcentaje de pérdidas: ${fmt(data.perdidasPct)} %`,
-      `Pérdidas estimadas: ${fmt((data.perdidasPct / 100) * p.potenciaKw)} kW`,
+      `RESULTADOS TOTALES:`,
+      `Potencia aparente: ${fmt(primero.potenciaS)} kVA`,
+      `Potencia reactiva: ${fmt(primero.potenciaQ)} kVAR`,
+      `Corriente: ${fmt(primero.corriente)} A`,
+      `Porcentaje de pérdidas total: ${fmt(perdidasPctTotal)} %`,
+      `Pérdidas totales estimadas: ${fmt(perdidasKwTotal)} kW`,
     ].join("\n");
 
-    const estado = estadoGauge(data.perdidasPct, GAUGE_BREAKPOINTS);
-    const perdidasKw = (data.perdidasPct / 100) * p.potenciaKw;
-    const maxPotencia = Math.max(p.potenciaKw, data.potenciaS, data.potenciaQ) || 1;
-    const wActiva = (p.potenciaKw / maxPotencia) * 100;
-    const wAparente = (data.potenciaS / maxPotencia) * 100;
-    const wReactiva = (data.potenciaQ / maxPotencia) * 100;
+    const estado = estadoGauge(perdidasPctTotal, GAUGE_BREAKPOINTS);
+    const maxPotencia = Math.max(base.potenciaKw, primero.potenciaS, primero.potenciaQ) || 1;
+    const wActiva = (base.potenciaKw / maxPotencia) * 100;
+    const wAparente = (primero.potenciaS / maxPotencia) * 100;
+    const wReactiva = (primero.potenciaQ / maxPotencia) * 100;
+
+    const bloqueComparacionCalibres =
+      conDatos.length === 1 ? buildComparacionCalibresHtml(base, conDatos[0]) : "";
+    const bloqueResumenTramos = conDatos.length > 1 ? buildResumenTramosHtml(conDatos) : "";
 
     wrap.innerHTML = `
       <div class="card">
@@ -355,35 +496,36 @@ export async function render(container) {
               <div class="result-compare-row">
                 <span class="result-compare-label">Activa</span>
                 <div class="result-compare-track"><div class="result-compare-fill activa" style="width:${wActiva}%"></div></div>
-                <span class="result-compare-value">${fmt(p.potenciaKw, 0)} kW</span>
+                <span class="result-compare-value">${fmt(base.potenciaKw, 0)} kW</span>
               </div>
               <div class="result-compare-row">
                 <span class="result-compare-label">Aparente</span>
                 <div class="result-compare-track"><div class="result-compare-fill aparente" style="width:${wAparente}%"></div></div>
-                <span class="result-compare-value">${fmt(data.potenciaS)} kVA</span>
+                <span class="result-compare-value">${fmt(primero.potenciaS)} kVA</span>
               </div>
               <div class="result-compare-row">
                 <span class="result-compare-label">Reactiva</span>
                 <div class="result-compare-track"><div class="result-compare-fill reactiva" style="width:${wReactiva}%"></div></div>
-                <span class="result-compare-value">${fmt(data.potenciaQ)} kVAR</span>
+                <span class="result-compare-value">${fmt(primero.potenciaQ)} kVAR</span>
               </div>
             </div>
             <div class="result-gauge-row">
               <div class="result-gauge">
-                ${buildGaugeSvg(data.perdidasPct, { max: GAUGE_MAX, breakpoints: GAUGE_BREAKPOINTS })}
-                <div class="result-gauge-value">${fmtPercent(data.perdidasPct)}</div>
+                ${buildGaugeSvg(perdidasPctTotal, { max: GAUGE_MAX, breakpoints: GAUGE_BREAKPOINTS })}
+                <div class="result-gauge-value">${fmtPercent(perdidasPctTotal)}</div>
               </div>
               <div class="result-gauge-info">
-                <div class="result-gauge-title">Porcentaje de pérdidas <span class="badge ${estado.cls}">${estado.label}</span></div>
+                <div class="result-gauge-title">Porcentaje de pérdidas total <span class="badge ${estado.cls}">${estado.label}</span></div>
                 <div class="result-gauge-desc">Óptimo hasta 1% · Aceptable hasta 3% · Fuera de norma sobre 3%</div>
-                <div class="result-gauge-current">${fmt(data.corriente)}<span class="unit">A · Corriente</span></div>
+                <div class="result-gauge-current">${fmt(primero.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
             </div>
             <div class="result-extra-stat">
-              <span class="label">Pérdidas estimadas</span>
-              <span class="value">${fmt(perdidasKw)} kW</span>
+              <span class="label">Pérdidas totales estimadas</span>
+              <span class="value">${fmt(perdidasKwTotal)} kW</span>
             </div>
-            ${buildComparacionCalibresHtml(p, ctx)}
+            ${bloqueResumenTramos}
+            ${bloqueComparacionCalibres}
           </div>
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>

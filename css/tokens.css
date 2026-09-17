@@ -94,6 +94,8 @@
   --tile-bg-regulacion: var(--tertiary-blue-soft);
   --tile-color-cortocircuito: var(--accent);
   --tile-bg-cortocircuito: var(--accent-soft);
+  --tile-color-ampacidad: var(--warning);
+  --tile-bg-ampacidad: var(--warning-soft);
 }
 
 /* --- paleta oscura: neutros grises derivados del color secundario de
@@ -147,6 +149,8 @@
     --tile-bg-regulacion: var(--accent-surface-bg);
     --tile-color-cortocircuito: var(--accent-surface-contrast);
     --tile-bg-cortocircuito: var(--accent-surface-bg);
+    --tile-color-ampacidad: var(--accent-surface-contrast);
+    --tile-bg-ampacidad: var(--accent-surface-bg);
   }
 }
 
@@ -189,4 +193,6 @@
   --tile-bg-regulacion: var(--accent-surface-bg);
   --tile-color-cortocircuito: var(--accent-surface-contrast);
   --tile-bg-cortocircuito: var(--accent-surface-bg);
+  --tile-color-ampacidad: var(--accent-surface-contrast);
+  --tile-bg-ampacidad: var(--accent-surface-bg);
 }

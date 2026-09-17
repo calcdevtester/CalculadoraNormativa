@@ -1,4 +1,11 @@
 // Calculadora de caida de tension (regulacion) en una linea trifasica.
+// Soporta circuitos con varios tramos (aereos y/o subterraneos): cada tramo
+// tiene su propio conductor (tipo de red/material/calibre/longitud/RMG) y su
+// propia geometria de fases, y la caida de tension de cada tramo se suma
+// para dar el resultado total del circuito. Corriente, potencia aparente y
+// potencia reactiva son las mismas para todos los tramos (dependen solo de
+// P, V y FP), asumiendo que la corriente es la misma a lo largo de todo el
+// circuito (sin cargas intermedias entre tramos).
 
 import { fmt, fmtPercent, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularRegulacion } from "../calc/regulacion.js";
@@ -21,8 +28,14 @@ Reactancia inductiva: Xl = 0.0754·ln( ∛(Dab·Dac·Dbc) / RMG )     [Ω/km]
 Factor de regulación: Fr = R + Xl·tan φ
 Constante de regulación: K  = Fr / (10·V²)
 
-% Caída de tensión = (P·L·Fr) / (10·V²)
+% Caída de tensión (por tramo) = (P·L·Fr) / (10·V²)
+
+Para circuitos de varios tramos, el % de caída de tensión total es la suma
+del % de cada tramo (válido cuando la corriente es la misma en todo el
+circuito, es decir, sin cargas intermedias entre tramos).
 `;
+
+const TRAMO_COLORS = ["var(--accent)", "var(--tertiary-blue)", "var(--tertiary-green)", "var(--warning)", "var(--danger)"];
 
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
@@ -31,7 +44,7 @@ export async function render(container) {
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Regulación</span></div>
     <h1 class="page-title">Cálculo de regulación</h1>
-    <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
+    <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución. Soporta circuitos de varios tramos.</p>
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
@@ -42,80 +55,35 @@ export async function render(container) {
             <input type="number" id="f-tension" min="0" max="1000" step="0.1" value="34.5" required>
           </div>
           <div class="field">
-            <label for="f-potencia">Potencia activa (kW)</label>
-            <input type="number" id="f-potencia" min="0" max="500000" step="1000" value="10000" required>
-            <span class="hint">Si solo conoce la potencia aparente, ingrésela aquí y utilice FP = 1.</span>
+            <label for="f-modo-entrada">Dato de partida</label>
+            <select id="f-modo-entrada">
+              <option value="potencia">Potencia activa</option>
+              <option value="aparente">Potencia aparente</option>
+              <option value="corriente">Corriente</option>
+            </select>
           </div>
+        </div>
+
+        <div class="field" id="wrap-potencia">
+          <label for="f-potencia">Potencia activa (kW)</label>
+          <input type="number" id="f-potencia" min="0" max="500000" step="1" value="10000" required>
+        </div>
+        <div class="field" id="wrap-aparente" hidden>
+          <label for="f-potencia-aparente">Potencia aparente (kVA)</label>
+          <input type="number" id="f-potencia-aparente" min="0" max="500000" step="1" value="10526">
+        </div>
+        <div class="field" id="wrap-corriente" hidden>
+          <label for="f-corriente">Corriente (A)</label>
+          <input type="number" id="f-corriente" min="0" max="10000" step="0.1" value="176">
         </div>
 
         <div class="field">
           <label for="f-fp">Factor de potencia (FP)</label>
           <input type="number" id="f-fp" min="-1" max="1" step="0.05" value="0.95" required>
         </div>
-
-        <div class="field">
-          <label for="f-longitud">Longitud de la línea (km)</label>
-          <input type="number" id="f-longitud" min="0" max="500" step="0.1" value="5" required>
-        </div>
       </div>
 
-      <div class="form-section card">
-        <div class="form-section-title">${icon("calculator")} Conductor</div>
-        <div class="grid-2">
-          <div class="field">
-            <label for="f-red">Tipo de red</label>
-            <select id="f-red" required>
-              <option value="Aerea">Aérea</option>
-              <option value="Subterranea">Subterránea</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-material">Material del conductor</label>
-            <select id="f-material" required></select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="f-calibre">Calibre del conductor</label>
-          <select id="f-calibre" required disabled>
-            <option value="">Seleccione un material primero</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="f-resistencia">R Conductor a 75° (Ω/km)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-resistencia" min="0" max="1000" step="0.001" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia"> Manual</label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="f-rmg">Radio medio geométrico (mm)</label>
-          <div class="input-with-toggle">
-            <input type="number" id="f-rmg" min="0" max="1000" step="0.01" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-rmg"> Manual</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section card">
-        <div class="form-section-title">${icon("ruler")} Geometría de fases</div>
-        <div class="grid-3">
-          <div class="field">
-            <label for="f-dab">Distancia entre fases A-B (m)</label>
-            <input type="number" id="f-dab" min="0" max="100" step="0.1" value="1.6" required>
-          </div>
-          <div class="field">
-            <label for="f-dac">Distancia entre fases A-C (m)</label>
-            <input type="number" id="f-dac" min="0" max="100" step="0.1" value="2.7" required>
-          </div>
-          <div class="field">
-            <label for="f-dbc">Distancia entre fases B-C (m)</label>
-            <input type="number" id="f-dbc" min="0" max="100" step="0.1" value="1.1" required>
-          </div>
-        </div>
-      </div>
+      <div id="tramos-container"></div>
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
@@ -142,107 +110,312 @@ export async function render(container) {
   const form = container.querySelector("#form-calc");
   const fTension = container.querySelector("#f-tension");
   const fPotencia = container.querySelector("#f-potencia");
+  const fPotenciaAparente = container.querySelector("#f-potencia-aparente");
+  const fCorriente = container.querySelector("#f-corriente");
+  const wrapPotencia = container.querySelector("#wrap-potencia");
+  const wrapAparente = container.querySelector("#wrap-aparente");
+  const wrapCorriente = container.querySelector("#wrap-corriente");
+  const selModoEntrada = container.querySelector("#f-modo-entrada");
   const fFp = container.querySelector("#f-fp");
-  const fLongitud = container.querySelector("#f-longitud");
-  const selRed = container.querySelector("#f-red");
-  const selMaterial = container.querySelector("#f-material");
-  const selCalibre = container.querySelector("#f-calibre");
-  const fResistencia = container.querySelector("#f-resistencia");
-  const fRmg = container.querySelector("#f-rmg");
-  const chkResistencia = container.querySelector("#chk-resistencia");
-  const chkRmg = container.querySelector("#chk-rmg");
-  const fDab = container.querySelector("#f-dab");
-  const fDac = container.querySelector("#f-dac");
-  const fDbc = container.querySelector("#f-dbc");
 
-  let filaSeleccionada = null;
+  let modoEntrada = "potencia";
 
-  function datasetActivo() {
-    return selRed.value === "Aerea" ? aereos : subterraneos;
+  function setModoEntrada(modo) {
+    modoEntrada = modo;
+    wrapPotencia.hidden = modo !== "potencia";
+    wrapAparente.hidden = modo !== "aparente";
+    wrapCorriente.hidden = modo !== "corriente";
+    fPotencia.required = modo === "potencia";
+    fPotenciaAparente.required = modo === "aparente";
+    fCorriente.required = modo === "corriente";
   }
-  function campoMaterial() {
-    return selRed.value === "Aerea" ? "tipo" : "material_conductor";
-  }
+  selModoEntrada.addEventListener("change", () => setModoEntrada(selModoEntrada.value));
+  setModoEntrada("potencia");
 
-  function poblarMaterial() {
-    const opciones = distinct(datasetActivo(), campoMaterial());
-    selMaterial.innerHTML = opciones.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-    poblarCalibre();
+  function resolverPotenciaKw() {
+    if (modoEntrada === "aparente") return parseFloat(fPotenciaAparente.value) * parseFloat(fFp.value);
+    if (modoEntrada === "corriente") {
+      const corrienteA = parseFloat(fCorriente.value);
+      return corrienteA * parseFloat(fTension.value) * parseFloat(fFp.value) * Math.sqrt(3);
+    }
+    return parseFloat(fPotencia.value);
   }
 
-  function poblarCalibre() {
-    const campo = campoMaterial();
-    const material = selMaterial.value;
-    const calibres = distinct(
-      datasetActivo().filter((c) => c[campo] === material),
-      "calibre_awg_kcmil"
-    );
-    selCalibre.innerHTML = calibres.length
-      ? `<option value="">Seleccione…</option>` + calibres.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")
-      : `<option value="">Sin calibres disponibles</option>`;
-    selCalibre.disabled = !calibres.length;
-    filaSeleccionada = null;
-    syncDefaults();
+  // --- Tramos del conductor -------------------------------------------
+  let nextTramoId = 1;
+  function nuevoEstadoTramo() {
+    return {
+      red: "Aerea",
+      material: null,
+      calibre: null,
+      longitudKm: 5,
+      manualResistencia: false,
+      resistenciaOhmKm: null,
+      manualRmg: false,
+      rmgMm: null,
+      dabM: 1.6,
+      dacM: 2.7,
+      dbcM: 1.1,
+    };
+  }
+  const tramos = [{ id: 0, state: nuevoEstadoTramo() }];
+
+  function datasetPara(red) {
+    return red === "Aerea" ? aereos : subterraneos;
+  }
+  function campoMaterialPara(red) {
+    return red === "Aerea" ? "tipo" : "material_conductor";
   }
 
-  function resolverFila() {
-    const campo = campoMaterial();
-    const material = selMaterial.value;
-    const calibre = selCalibre.value;
-    if (!calibre) return null;
-    return datasetActivo().find((c) => c[campo] === material && c.calibre_awg_kcmil === calibre) || null;
+  function renderTramoHtml(t, index) {
+    const id = t.id;
+    const num = index + 1;
+    const esUltimo = index === tramos.length - 1;
+    const quitarBtn =
+      tramos.length > 1
+        ? `<button type="button" class="btn btn-ghost btn-tramo-quitar" data-id="${id}" style="margin-left:auto; padding:2px 8px; font-size:0.72rem; text-transform:none; letter-spacing:normal;">${icon("close")} Quitar</button>`
+        : "";
+    const agregarBtn = esUltimo
+      ? `<div class="btn-row" style="margin-top: var(--space-4);">
+          <button type="button" class="btn btn-agregar-tramo">${icon("plus")} Agregar nuevo tramo</button>
+        </div>`
+      : "";
+    return `
+      <div class="form-section card tramo-block" data-id="${id}">
+        <div class="form-section-title">${icon("calculator")} Conductor — Tramo ${num}${quitarBtn}</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-red-${id}">Tipo de red</label>
+            <select id="f-red-${id}" required>
+              <option value="Aerea" ${t.state.red === "Aerea" ? "selected" : ""}>Aérea</option>
+              <option value="Subterranea" ${t.state.red === "Subterranea" ? "selected" : ""}>Subterránea</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-material-${id}">Material del conductor</label>
+            <select id="f-material-${id}" required></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-longitud-${id}">Longitud del tramo (km)</label>
+          <input type="number" id="f-longitud-${id}" min="0" max="500" step="0.1" value="${t.state.longitudKm}" required>
+        </div>
+
+        <div class="field">
+          <label for="f-calibre-${id}">Calibre del conductor</label>
+          <select id="f-calibre-${id}" required disabled>
+            <option value="">Seleccione un material primero</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f-resistencia-${id}">R Conductor a 75° (Ω/km)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-resistencia-${id}" min="0" max="1000" step="0.001" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia-${id}" ${t.state.manualResistencia ? "checked" : ""}> Manual</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-rmg-${id}">Radio medio geométrico (mm)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-rmg-${id}" min="0" max="1000" step="0.01" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-rmg-${id}" ${t.state.manualRmg ? "checked" : ""}> Manual</label>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label for="f-dab-${id}">Distancia entre fases A-B (m)</label>
+            <input type="number" id="f-dab-${id}" min="0" max="100" step="0.1" value="${t.state.dabM}" required>
+          </div>
+          <div class="field">
+            <label for="f-dac-${id}">Distancia entre fases A-C (m)</label>
+            <input type="number" id="f-dac-${id}" min="0" max="100" step="0.1" value="${t.state.dacM}" required>
+          </div>
+          <div class="field">
+            <label for="f-dbc-${id}">Distancia entre fases B-C (m)</label>
+            <input type="number" id="f-dbc-${id}" min="0" max="100" step="0.1" value="${t.state.dbcM}" required>
+          </div>
+        </div>
+        ${agregarBtn}
+      </div>
+    `;
   }
 
-  function syncDefaults() {
-    if (!chkResistencia.checked) fResistencia.value = filaSeleccionada ? filaSeleccionada.r_ac_75c_ohm_km : "";
-    if (!chkRmg.checked) fRmg.value = filaSeleccionada ? filaSeleccionada.radio_medio_geometrico_mm : "";
+  function bindTramoEvents() {
+    tramos.forEach((t) => {
+      const id = t.id;
+      const selRed = container.querySelector(`#f-red-${id}`);
+      const selMaterial = container.querySelector(`#f-material-${id}`);
+      const selCalibre = container.querySelector(`#f-calibre-${id}`);
+      const fLongitud = container.querySelector(`#f-longitud-${id}`);
+      const fResistencia = container.querySelector(`#f-resistencia-${id}`);
+      const chkResistencia = container.querySelector(`#chk-resistencia-${id}`);
+      const fRmg = container.querySelector(`#f-rmg-${id}`);
+      const chkRmg = container.querySelector(`#chk-rmg-${id}`);
+      const fDab = container.querySelector(`#f-dab-${id}`);
+      const fDac = container.querySelector(`#f-dac-${id}`);
+      const fDbc = container.querySelector(`#f-dbc-${id}`);
+
+      function poblarMaterial() {
+        const opciones = distinct(datasetPara(selRed.value), campoMaterialPara(selRed.value));
+        selMaterial.innerHTML = opciones.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+        if (t.state.material && opciones.includes(t.state.material)) selMaterial.value = t.state.material;
+        else t.state.material = selMaterial.value || null;
+        poblarCalibre();
+      }
+      function poblarCalibre() {
+        const campo = campoMaterialPara(selRed.value);
+        const material = selMaterial.value;
+        const calibres = distinct(
+          datasetPara(selRed.value).filter((c) => c[campo] === material),
+          "calibre_awg_kcmil"
+        );
+        selCalibre.innerHTML = calibres.length
+          ? `<option value="">Seleccione…</option>` + calibres.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")
+          : `<option value="">Sin calibres disponibles</option>`;
+        selCalibre.disabled = !calibres.length;
+        if (t.state.calibre && calibres.includes(t.state.calibre)) selCalibre.value = t.state.calibre;
+        else t.state.calibre = null;
+        t.filaSeleccionada = resolverFila();
+        syncDefaults();
+      }
+      function resolverFila() {
+        const campo = campoMaterialPara(selRed.value);
+        const material = selMaterial.value;
+        const calibre = selCalibre.value;
+        if (!calibre) return null;
+        return datasetPara(selRed.value).find((c) => c[campo] === material && c.calibre_awg_kcmil === calibre) || null;
+      }
+      function syncDefaults() {
+        if (!chkResistencia.checked) fResistencia.value = t.filaSeleccionada ? t.filaSeleccionada.r_ac_75c_ohm_km : "";
+        if (!chkRmg.checked) fRmg.value = t.filaSeleccionada ? t.filaSeleccionada.radio_medio_geometrico_mm : "";
+      }
+
+      selRed.addEventListener("change", () => {
+        t.state.red = selRed.value;
+        t.state.material = null;
+        t.state.calibre = null;
+        poblarMaterial();
+      });
+      selMaterial.addEventListener("change", () => {
+        t.state.material = selMaterial.value;
+        t.state.calibre = null;
+        poblarCalibre();
+      });
+      selCalibre.addEventListener("change", () => {
+        t.state.calibre = selCalibre.value;
+        t.filaSeleccionada = resolverFila();
+        syncDefaults();
+      });
+      fLongitud.addEventListener("input", () => {
+        t.state.longitudKm = fLongitud.value;
+      });
+      chkResistencia.addEventListener("change", () => {
+        fResistencia.disabled = !chkResistencia.checked;
+        t.state.manualResistencia = chkResistencia.checked;
+        if (!chkResistencia.checked) syncDefaults();
+      });
+      fResistencia.addEventListener("input", () => {
+        if (chkResistencia.checked) t.state.resistenciaOhmKm = fResistencia.value;
+      });
+      chkRmg.addEventListener("change", () => {
+        fRmg.disabled = !chkRmg.checked;
+        t.state.manualRmg = chkRmg.checked;
+        if (!chkRmg.checked) syncDefaults();
+      });
+      fRmg.addEventListener("input", () => {
+        if (chkRmg.checked) t.state.rmgMm = fRmg.value;
+      });
+      fDab.addEventListener("input", () => {
+        t.state.dabM = fDab.value;
+      });
+      fDac.addEventListener("input", () => {
+        t.state.dacM = fDac.value;
+      });
+      fDbc.addEventListener("input", () => {
+        t.state.dbcM = fDbc.value;
+      });
+
+      fResistencia.disabled = !chkResistencia.checked;
+      fRmg.disabled = !chkRmg.checked;
+      poblarMaterial();
+      if (chkResistencia.checked && t.state.resistenciaOhmKm != null) fResistencia.value = t.state.resistenciaOhmKm;
+      if (chkRmg.checked && t.state.rmgMm != null) fRmg.value = t.state.rmgMm;
+
+      t.getEstado = () => ({
+        red: selRed.value,
+        material: selMaterial.value,
+        calibre: selCalibre.value,
+        longitudKm: parseFloat(fLongitud.value),
+        resistenciaOhmKm: parseFloat(fResistencia.value),
+        rmgMm: parseFloat(fRmg.value),
+        dabM: parseFloat(fDab.value),
+        dacM: parseFloat(fDac.value),
+        dbcM: parseFloat(fDbc.value),
+      });
+    });
+
+    container.querySelectorAll(".btn-tramo-quitar").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.dataset.id, 10);
+        const idx = tramos.findIndex((t) => t.id === id);
+        if (idx !== -1) tramos.splice(idx, 1);
+        renderTramos();
+      });
+    });
+
+    const btnAgregar = container.querySelector(".btn-agregar-tramo");
+    if (btnAgregar) {
+      btnAgregar.addEventListener("click", () => {
+        tramos.push({ id: nextTramoId++, state: nuevoEstadoTramo() });
+        renderTramos();
+      });
+    }
   }
 
-  selRed.addEventListener("change", poblarMaterial);
-  selMaterial.addEventListener("change", poblarCalibre);
-  selCalibre.addEventListener("change", () => {
-    filaSeleccionada = resolverFila();
-    syncDefaults();
-  });
-  chkResistencia.addEventListener("change", () => {
-    fResistencia.disabled = !chkResistencia.checked;
-    if (!chkResistencia.checked) syncDefaults();
-  });
-  chkRmg.addEventListener("change", () => {
-    fRmg.disabled = !chkRmg.checked;
-    if (!chkRmg.checked) syncDefaults();
-  });
+  function renderTramos() {
+    const cont = container.querySelector("#tramos-container");
+    cont.innerHTML = tramos.map((t, i) => renderTramoHtml(t, i)).join("");
+    bindTramoEvents();
+  }
 
-  poblarMaterial();
+  renderTramos();
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
 
-    const p = {
+    const base = {
       tensionKv: parseFloat(fTension.value),
-      potenciaKw: parseFloat(fPotencia.value),
+      potenciaKw: resolverPotenciaKw(),
       factorPotencia: parseFloat(fFp.value),
-      longitudKm: parseFloat(fLongitud.value),
-      resistenciaOhmKm: parseFloat(fResistencia.value),
-      rmgMm: parseFloat(fRmg.value),
-      dabM: parseFloat(fDab.value),
-      dacM: parseFloat(fDac.value),
-      dbcM: parseFloat(fDbc.value),
     };
 
-    const data = calcularRegulacion(p);
-    renderResultado(data, p, { red: selRed.value, material: selMaterial.value, calibre: selCalibre.value });
+    const resultadosTramos = tramos.map((t, i) => {
+      const estado = t.getEstado();
+      const data = calcularRegulacion({
+        ...base,
+        longitudKm: estado.longitudKm,
+        resistenciaOhmKm: estado.resistenciaOhmKm,
+        rmgMm: estado.rmgMm,
+        dabM: estado.dabM,
+        dacM: estado.dacM,
+        dbcM: estado.dbcM,
+      });
+      return { numero: i + 1, ...estado, data };
+    });
+
+    renderResultado(resultadosTramos, base);
   });
 
-  // Ventana comparativa de calibres alrededor del umbral "aceptable" (10%),
-  // calculada automaticamente con el resultado -- ver misma logica en
-  // js/views/perdidas.js (GAUGE_BREAKPOINTS[1] es el limite normativo real;
-  // el primer breakpoint, 5%, es solo el nivel "optimo").
-  function calcularCandidatosCalibre(p, ctx) {
-    const campo = ctx.red === "Aerea" ? "tipo" : "material_conductor";
+  // --- Sugerencia de calibre (solo tiene sentido con un unico tramo) ---
+  function calcularCandidatosCalibre(base, ctx) {
+    const campo = campoMaterialPara(ctx.red);
     const areaField = ctx.red === "Aerea" ? "area_seccion_aluminio_mm2" : "area_conductor_mm2";
-    return datasetActivo()
+    return datasetPara(ctx.red)
       .filter(
         (row) =>
           row[campo] === ctx.material &&
@@ -252,14 +425,22 @@ export async function render(container) {
           row[areaField] != null
       )
       .map((row) => {
-        const data = calcularRegulacion({ ...p, resistenciaOhmKm: row.r_ac_75c_ohm_km, rmgMm: row.radio_medio_geometrico_mm });
+        const data = calcularRegulacion({
+          ...base,
+          longitudKm: ctx.longitudKm,
+          resistenciaOhmKm: row.r_ac_75c_ohm_km,
+          rmgMm: row.radio_medio_geometrico_mm,
+          dabM: ctx.dabM,
+          dacM: ctx.dacM,
+          dbcM: ctx.dbcM,
+        });
         return { calibre: row.calibre_awg_kcmil, area: row[areaField], caidaTensionPct: data.caidaTensionPct };
       })
       .sort((a, b) => a.area - b.area);
   }
 
-  function buildComparacionCalibresHtml(p, ctx) {
-    const candidatos = calcularCandidatosCalibre(p, ctx);
+  function buildComparacionCalibresHtml(base, ctx) {
+    const candidatos = calcularCandidatosCalibre(base, ctx);
     if (!candidatos.length) return "";
 
     const objetivoPct = GAUGE_BREAKPOINTS[1];
@@ -301,8 +482,48 @@ export async function render(container) {
     `;
   }
 
-  function renderResultado(data, p, ctx) {
+  function buildResumenTramosHtml(resultadosTramos) {
+    const maxPct = Math.max(...resultadosTramos.map((r) => r.data.caidaTensionPct)) || 1;
+    const filas = resultadosTramos
+      .map((r, i) => {
+        const color = TRAMO_COLORS[i % TRAMO_COLORS.length];
+        const ancho = (r.data.caidaTensionPct / maxPct) * 100;
+        return `
+          <div class="result-compare-row">
+            <span class="result-compare-label">Tramo ${r.numero}</span>
+            <div class="result-compare-track"><div class="result-compare-fill" style="width:${ancho}%; background:${color};"></div></div>
+            <span class="result-compare-value">${fmtPercent(r.data.caidaTensionPct)}</span>
+          </div>`;
+      })
+      .join("");
+
+    return `
+      <div class="result-subhead">Caída de tensión por tramo</div>
+      <div class="result-compare">${filas}</div>
+    `;
+  }
+
+  function renderResultado(resultadosTramos, base) {
     const wrap = container.querySelector("#resultado-wrap");
+
+    const primero = resultadosTramos[0].data;
+    const caidaTensionPctTotal = resultadosTramos.reduce((sum, r) => sum + r.data.caidaTensionPct, 0);
+
+    const reporteTramos = resultadosTramos
+      .map(
+        (r) => `
+TRAMO ${r.numero}:
+  Tipo de red: ${r.red === "Aerea" ? "Aérea" : "Subterránea"}
+  Material del conductor: ${r.material}
+  Calibre del conductor: ${r.calibre} (AWG/kcmil)
+  Longitud del tramo: ${fmt(r.longitudKm)} km
+  Resistencia del conductor a 75°C: ${fmt(r.resistenciaOhmKm)} Ω/km
+  Radio medio geométrico del conductor: ${fmt(r.rmgMm)} mm
+  Distancia entre fases: AB: ${fmt(r.dabM)} m  AC: ${fmt(r.dacM)} m  BC: ${fmt(r.dbcM)} m
+  Constante de regulación del tramo: ${fmt(r.data.intermedios.constanteRegulacion, 7)}
+  Caída de tensión del tramo: ${fmt(r.data.caidaTensionPct)} %`
+      )
+      .join("\n");
 
     const reporte = [
       `CALCULADORA NORMATIVA 2026`,
@@ -311,31 +532,35 @@ export async function render(container) {
       ``,
       `------------------------`,
       `PARÁMETROS DE ENTRADA:`,
-      `Nivel de tensión de la línea: ${fmt(p.tensionKv)} kV`,
-      `Potencia activa: ${fmt(p.potenciaKw, 0)} kW`,
-      `Factor de potencia: ${fmt(p.factorPotencia)}`,
-      `Longitud de la línea: ${fmt(p.longitudKm)} km`,
-      `Tipo de red: ${ctx.red === "Aerea" ? "Aérea" : "Subterránea"}`,
-      `Material del conductor: ${ctx.material}`,
-      `Calibre del conductor: ${ctx.calibre} (AWG/kcmil)`,
-      `Resistencia del conductor a 75°C: ${fmt(p.resistenciaOhmKm)} Ω/km`,
-      `Radio medio geométrico del conductor: ${fmt(p.rmgMm)} mm`,
-      `Distancia entre fases: AB: ${fmt(p.dabM)} m  AC: ${fmt(p.dacM)} m  BC: ${fmt(p.dbcM)} m`,
+      `Nivel de tensión de la línea: ${fmt(base.tensionKv)} kV`,
+      `Potencia activa: ${fmt(base.potenciaKw, 0)} kW`,
+      `Factor de potencia: ${fmt(base.factorPotencia)}`,
+      reporteTramos,
       ``,
       `-------------------`,
-      `RESULTADOS:`,
-      `Corriente: ${fmt(data.corriente)} A`,
-      `Potencia aparente: ${fmt(data.potenciaS)} kVA`,
-      `Potencia reactiva: ${fmt(data.potenciaQ)} kVAR`,
-      `Constante de regulación: ${fmt(data.intermedios.constanteRegulacion, 7)}`,
-      `Caída de tensión: ${fmt(data.caidaTensionPct)} %`,
+      `RESULTADOS TOTALES:`,
+      `Corriente: ${fmt(primero.corriente)} A`,
+      `Potencia aparente: ${fmt(primero.potenciaS)} kVA`,
+      `Potencia reactiva: ${fmt(primero.potenciaQ)} kVAR`,
+      `Caída de tensión total: ${fmt(caidaTensionPctTotal)} %`,
     ].join("\n");
 
-    const estado = estadoGauge(data.caidaTensionPct, GAUGE_BREAKPOINTS);
-    const maxPotencia = Math.max(p.potenciaKw, data.potenciaS, data.potenciaQ) || 1;
-    const wActiva = (p.potenciaKw / maxPotencia) * 100;
-    const wAparente = (data.potenciaS / maxPotencia) * 100;
-    const wReactiva = (data.potenciaQ / maxPotencia) * 100;
+    const estado = estadoGauge(caidaTensionPctTotal, GAUGE_BREAKPOINTS);
+    const maxPotencia = Math.max(base.potenciaKw, primero.potenciaS, primero.potenciaQ) || 1;
+    const wActiva = (base.potenciaKw / maxPotencia) * 100;
+    const wAparente = (primero.potenciaS / maxPotencia) * 100;
+    const wReactiva = (primero.potenciaQ / maxPotencia) * 100;
+
+    const bloqueExtra =
+      resultadosTramos.length === 1
+        ? `
+          <div class="result-extra-stat">
+            <span class="label">Constante de regulación</span>
+            <span class="value">${fmt(resultadosTramos[0].data.intermedios.constanteRegulacion, 7)}</span>
+          </div>
+          ${buildComparacionCalibresHtml(base, resultadosTramos[0])}
+        `
+        : buildResumenTramosHtml(resultadosTramos);
 
     wrap.innerHTML = `
       <div class="card">
@@ -350,35 +575,31 @@ export async function render(container) {
               <div class="result-compare-row">
                 <span class="result-compare-label">Activa</span>
                 <div class="result-compare-track"><div class="result-compare-fill activa" style="width:${wActiva}%"></div></div>
-                <span class="result-compare-value">${fmt(p.potenciaKw, 0)} kW</span>
+                <span class="result-compare-value">${fmt(base.potenciaKw, 0)} kW</span>
               </div>
               <div class="result-compare-row">
                 <span class="result-compare-label">Aparente</span>
                 <div class="result-compare-track"><div class="result-compare-fill aparente" style="width:${wAparente}%"></div></div>
-                <span class="result-compare-value">${fmt(data.potenciaS)} kVA</span>
+                <span class="result-compare-value">${fmt(primero.potenciaS)} kVA</span>
               </div>
               <div class="result-compare-row">
                 <span class="result-compare-label">Reactiva</span>
                 <div class="result-compare-track"><div class="result-compare-fill reactiva" style="width:${wReactiva}%"></div></div>
-                <span class="result-compare-value">${fmt(data.potenciaQ)} kVAR</span>
+                <span class="result-compare-value">${fmt(primero.potenciaQ)} kVAR</span>
               </div>
             </div>
             <div class="result-gauge-row">
               <div class="result-gauge">
-                ${buildGaugeSvg(data.caidaTensionPct, { max: GAUGE_MAX, breakpoints: GAUGE_BREAKPOINTS })}
-                <div class="result-gauge-value">${fmtPercent(data.caidaTensionPct)}</div>
+                ${buildGaugeSvg(caidaTensionPctTotal, { max: GAUGE_MAX, breakpoints: GAUGE_BREAKPOINTS })}
+                <div class="result-gauge-value">${fmtPercent(caidaTensionPctTotal)}</div>
               </div>
               <div class="result-gauge-info">
-                <div class="result-gauge-title">Caída de tensión <span class="badge ${estado.cls}">${estado.label}</span></div>
+                <div class="result-gauge-title">Caída de tensión total <span class="badge ${estado.cls}">${estado.label}</span></div>
                 <div class="result-gauge-desc">Óptimo hasta 5% · Aceptable hasta 10% · Fuera de norma sobre 10%</div>
-                <div class="result-gauge-current">${fmt(data.corriente)}<span class="unit">A · Corriente</span></div>
+                <div class="result-gauge-current">${fmt(primero.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
             </div>
-            <div class="result-extra-stat">
-              <span class="label">Constante de regulación</span>
-              <span class="value">${fmt(data.intermedios.constanteRegulacion, 7)}</span>
-            </div>
-            ${buildComparacionCalibresHtml(p, ctx)}
+            ${bloqueExtra}
           </div>
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>

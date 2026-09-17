@@ -9,11 +9,17 @@ vanilla (HTML/CSS/JS, sin build step), siguiendo el mismo patrón de
 - **Pérdidas** — pérdidas de potencia por efecto Joule en una línea trifásica.
 - **Regulación** — caída de tensión (método de la constante de regulación K).
 - **Cortocircuito** — capacidad de corriente de cortocircuito admisible de un conductor.
-- **Ampacidad** — existía como tarjeta deshabilitada ("Próximo") en la app original
-  (`Visible: false`, sin lógica de cálculo implementada). Por decisión explícita
-  del usuario no se incluye ni siquiera como tarjeta deshabilitada en Inicio. Si
-  se necesita más adelante, `Herramientas_HTML` ya tiene calculadoras de ampacidad
-  aérea (IEEE 738) y subterránea (IEC 60287-1-1) que se podrían adaptar.
+- **Ampacidad** — capacidad de corriente admisible en régimen permanente de un
+  conductor, aéreo (IEEE Std 738) o subterráneo en banco de ductos (IEC
+  60287-1-1). Existía como tarjeta deshabilitada ("Próximo") en la app
+  original de Power Apps, sin lógica de cálculo implementada. Se incorporó
+  como módulo único (con un selector de tipo de instalación al inicio, en
+  vez de dos pantallas separadas), portando las fórmulas y datos ya
+  verificados de `Herramientas_HTML` (`js/calc/ampacidad-aerea.js` y
+  `js/calc/ampacidad-subterranea.js`, más `data/construccion-cable-subterraneo.json`
+  para la variante subterránea). A diferencia de los otros tres módulos, no
+  tiene panel de "Criterios de cálculo" propio todavía (solo la pestaña de
+  fórmulas), porque ese contenido curado no se ha transcrito.
 
 ## Arquitectura
 
