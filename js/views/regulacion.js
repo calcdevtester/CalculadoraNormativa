@@ -5,6 +5,11 @@ import { calcularRegulacion } from "../calc/regulacion.js";
 import { icon } from "../icons.js";
 import { renderCriterios } from "../util/criterios-render.js";
 import { regulacion as CRITERIOS_REGULACION } from "../data/criterios.js";
+import { estadoGauge, buildGaugeSvg } from "../util/gauge.js";
+
+// Velocímetro de % de caída de tensión: 0-5% óptimo, 5-10% aceptable, 10%+ fuera de norma.
+const GAUGE_MAX = 15;
+const GAUGE_BREAKPOINTS = [5, 10];
 
 const FORMULAS_HTML = `
 Corriente: I = P / (V·cos φ·√3)         [A]
@@ -25,83 +30,90 @@ export async function render(container) {
 
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Regulación</span></div>
-    <div class="hero-banner">
-      <h1 class="page-title">Cálculo de regulación</h1>
-      <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
-    </div>
+    <h1 class="page-title">Cálculo de regulación</h1>
+    <p class="page-subtitle">Caída de tensión y reactancia inductiva de un conductor en una línea trifásica de distribución.</p>
 
-    <form class="card" id="form-calc" novalidate>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f-tension">Nivel de tensión (kV)</label>
-          <input type="number" id="f-tension" min="0" max="1000" step="0.1" value="34.5" required>
+    <form id="form-calc" novalidate>
+      <div class="form-section card">
+        <div class="form-section-title">${icon("bolt")} Datos de la línea</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-tension">Nivel de tensión (kV)</label>
+            <input type="number" id="f-tension" min="0" max="1000" step="0.1" value="34.5" required>
+          </div>
+          <div class="field">
+            <label for="f-potencia">Potencia activa (kW)</label>
+            <input type="number" id="f-potencia" min="0" max="500000" step="1000" value="10000" required>
+            <span class="hint">Si solo conoce la potencia aparente, ingrésela aquí y utilice FP = 1.</span>
+          </div>
         </div>
+
         <div class="field">
-          <label for="f-potencia">Potencia activa (kW)</label>
-          <input type="number" id="f-potencia" min="0" max="500000" step="1000" value="10000" required>
-          <span class="hint">Si solo conoce la potencia aparente, ingrésela aquí y utilice FP = 1.</span>
+          <label for="f-fp">Factor de potencia (FP)</label>
+          <input type="number" id="f-fp" min="-1" max="1" step="0.05" value="0.95" required>
+        </div>
+
+        <div class="field">
+          <label for="f-longitud">Longitud de la línea (km)</label>
+          <input type="number" id="f-longitud" min="0" max="500" step="0.1" value="5" required>
         </div>
       </div>
 
-      <div class="field">
-        <label for="f-fp">Factor de potencia (FP)</label>
-        <input type="number" id="f-fp" min="-1" max="1" step="0.05" value="0.95" required>
-      </div>
+      <div class="form-section card">
+        <div class="form-section-title">${icon("calculator")} Conductor</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-red">Tipo de red</label>
+            <select id="f-red" required>
+              <option value="Aerea">Aérea</option>
+              <option value="Subterranea">Subterránea</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-material">Material del conductor</label>
+            <select id="f-material" required></select>
+          </div>
+        </div>
 
-      <div class="field">
-        <label for="f-longitud">Longitud de la línea (km)</label>
-        <input type="number" id="f-longitud" min="0" max="500" step="0.1" value="5" required>
-      </div>
-
-      <div class="grid-2">
         <div class="field">
-          <label for="f-red">Tipo de red</label>
-          <select id="f-red" required>
-            <option value="Aerea">Aérea</option>
-            <option value="Subterranea">Subterránea</option>
+          <label for="f-calibre">Calibre del conductor</label>
+          <select id="f-calibre" required disabled>
+            <option value="">Seleccione un material primero</option>
           </select>
         </div>
+
         <div class="field">
-          <label for="f-material">Material del conductor</label>
-          <select id="f-material" required></select>
+          <label for="f-resistencia">R Conductor a 75° (Ω/km)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-resistencia" min="0" max="1000" step="0.001" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-resistencia"> Manual</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-rmg">Radio medio geométrico (mm)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-rmg" min="0" max="1000" step="0.01" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-rmg"> Manual</label>
+          </div>
         </div>
       </div>
 
-      <div class="field">
-        <label for="f-calibre">Calibre del conductor</label>
-        <select id="f-calibre" required disabled>
-          <option value="">Seleccione un material primero</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="f-resistencia">R Conductor a 75° (Ω/km)</label>
-        <div class="input-with-toggle">
-          <input type="number" id="f-resistencia" min="0" max="1000" step="0.001" required disabled>
-          <label class="checkbox-row"><input type="checkbox" id="chk-resistencia"> Manual</label>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-rmg">Radio medio geométrico (mm)</label>
-        <div class="input-with-toggle">
-          <input type="number" id="f-rmg" min="0" max="1000" step="0.01" required disabled>
-          <label class="checkbox-row"><input type="checkbox" id="chk-rmg"> Manual</label>
-        </div>
-      </div>
-
-      <div class="grid-3">
-        <div class="field">
-          <label for="f-dab">Distancia entre fases A-B (m)</label>
-          <input type="number" id="f-dab" min="0" max="100" step="0.1" value="1.6" required>
-        </div>
-        <div class="field">
-          <label for="f-dac">Distancia entre fases A-C (m)</label>
-          <input type="number" id="f-dac" min="0" max="100" step="0.1" value="2.7" required>
-        </div>
-        <div class="field">
-          <label for="f-dbc">Distancia entre fases B-C (m)</label>
-          <input type="number" id="f-dbc" min="0" max="100" step="0.1" value="1.1" required>
+      <div class="form-section card">
+        <div class="form-section-title">${icon("ruler")} Geometría de fases</div>
+        <div class="grid-3">
+          <div class="field">
+            <label for="f-dab">Distancia entre fases A-B (m)</label>
+            <input type="number" id="f-dab" min="0" max="100" step="0.1" value="1.6" required>
+          </div>
+          <div class="field">
+            <label for="f-dac">Distancia entre fases A-C (m)</label>
+            <input type="number" id="f-dac" min="0" max="100" step="0.1" value="2.7" required>
+          </div>
+          <div class="field">
+            <label for="f-dbc">Distancia entre fases B-C (m)</label>
+            <input type="number" id="f-dbc" min="0" max="100" step="0.1" value="1.1" required>
+          </div>
         </div>
       </div>
 
@@ -253,6 +265,12 @@ export async function render(container) {
       `Caída de tensión: ${fmt(data.caidaTensionPct)} %`,
     ].join("\n");
 
+    const estado = estadoGauge(data.caidaTensionPct, GAUGE_BREAKPOINTS);
+    const maxPotencia = Math.max(p.potenciaKw, data.potenciaS, data.potenciaQ) || 1;
+    const wActiva = (p.potenciaKw / maxPotencia) * 100;
+    const wAparente = (data.potenciaS / maxPotencia) * 100;
+    const wReactiva = (data.potenciaQ / maxPotencia) * 100;
+
     wrap.innerHTML = `
       <div class="card">
         <div class="tabs">
@@ -261,28 +279,38 @@ export async function render(container) {
           <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
-          <div class="result-panel">
-            <div class="grid-2">
-              <div class="result-metric">
-                <div class="value">${fmt(data.corriente)}<span class="unit">A</span></div>
-                <div class="label">Corriente</div>
+          <div class="result-report">
+            <div class="result-compare">
+              <div class="result-compare-row">
+                <span class="result-compare-label">Activa</span>
+                <div class="result-compare-track"><div class="result-compare-fill activa" style="width:${wActiva}%"></div></div>
+                <span class="result-compare-value">${fmt(p.potenciaKw, 0)} kW</span>
               </div>
-              <div class="result-metric">
-                <div class="value">${fmtPercent(data.caidaTensionPct)}</div>
-                <div class="label">Caída de tensión</div>
+              <div class="result-compare-row">
+                <span class="result-compare-label">Aparente</span>
+                <div class="result-compare-track"><div class="result-compare-fill aparente" style="width:${wAparente}%"></div></div>
+                <span class="result-compare-value">${fmt(data.potenciaS)} kVA</span>
               </div>
-              <div class="result-metric">
-                <div class="value">${fmt(data.potenciaS)}<span class="unit">kVA</span></div>
-                <div class="label">Potencia aparente</div>
+              <div class="result-compare-row">
+                <span class="result-compare-label">Reactiva</span>
+                <div class="result-compare-track"><div class="result-compare-fill reactiva" style="width:${wReactiva}%"></div></div>
+                <span class="result-compare-value">${fmt(data.potenciaQ)} kVAR</span>
               </div>
-              <div class="result-metric">
-                <div class="value">${fmt(data.potenciaQ)}<span class="unit">kVAR</span></div>
-                <div class="label">Potencia reactiva</div>
+            </div>
+            <div class="result-gauge-row">
+              <div class="result-gauge">
+                ${buildGaugeSvg(data.caidaTensionPct, { max: GAUGE_MAX, breakpoints: GAUGE_BREAKPOINTS })}
+                <div class="result-gauge-value">${fmtPercent(data.caidaTensionPct)}</div>
               </div>
-              <div class="result-metric">
-                <div class="value">${fmt(data.intermedios.constanteRegulacion, 7)}</div>
-                <div class="label">Constante de regulación</div>
+              <div class="result-gauge-info">
+                <div class="result-gauge-title">Caída de tensión <span class="badge ${estado.cls}">${estado.label}</span></div>
+                <div class="result-gauge-desc">Óptimo hasta 5% · Aceptable hasta 10% · Fuera de norma sobre 10%</div>
+                <div class="result-gauge-current">${fmt(data.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
+            </div>
+            <div class="result-extra-stat">
+              <span class="label">Constante de regulación</span>
+              <span class="value">${fmt(data.intermedios.constanteRegulacion, 7)}</span>
             </div>
           </div>
         </div>

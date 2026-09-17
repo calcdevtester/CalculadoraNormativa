@@ -5,18 +5,21 @@ const MODULOS = [
     title: "Pérdidas",
     desc: "Pérdidas de potencia en líneas trifásicas por efecto Joule.",
     iconName: "money",
+    tileClass: "tile-icon-perdidas",
     hash: "#/perdidas",
   },
   {
     title: "Regulación",
     desc: "Cálculo de regulación de tensión en alimentadores.",
     iconName: "calculator",
+    tileClass: "tile-icon-regulacion",
     hash: "#/regulacion",
   },
   {
     title: "Cortocircuito",
     desc: "Capacidad de cortocircuito en conductores.",
     iconName: "bolt",
+    tileClass: "tile-icon-cortocircuito",
     hash: "#/cortocircuito",
   },
 ];
@@ -34,7 +37,7 @@ export async function render(container) {
         ${MODULOS.map(
           (m) => `
           <a class="menu-tile" href="${m.hash}">
-            <div class="tile-icon">${icon(m.iconName)}</div>
+            <div class="tile-icon ${m.tileClass}">${icon(m.iconName)}</div>
             <div class="tile-title">${m.title}</div>
             <div class="tile-desc">${m.desc}</div>
           </a>`

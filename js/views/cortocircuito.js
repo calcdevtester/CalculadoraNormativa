@@ -25,81 +25,85 @@ export async function render(container) {
 
   container.innerHTML = `
     <div class="breadcrumb"><a href="#/">Inicio</a> <span>/</span> <span>Cortocircuito</span></div>
-    <div class="hero-banner">
-      <h1 class="page-title">Cálculo de capacidad de cortocircuito</h1>
-      <p class="page-subtitle">Corriente de cortocircuito admisible de un conductor según el límite térmico durante el tiempo de despeje de la falla.</p>
-    </div>
+    <h1 class="page-title">Cálculo de capacidad de cortocircuito</h1>
+    <p class="page-subtitle">Corriente de cortocircuito admisible de un conductor según el límite térmico durante el tiempo de despeje de la falla.</p>
 
-    <form class="card" id="form-calc" novalidate>
-      <div class="grid-2">
+    <form id="form-calc" novalidate>
+      <div class="form-section card">
+        <div class="form-section-title">${icon("calculator")} Conductor</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-red">Tipo de conductor</label>
+            <select id="f-red" required>
+              <option value="Aereo">Aéreo</option>
+              <option value="Subterraneo">Subterráneo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-material">Material del conductor</label>
+            <select id="f-material" required></select>
+          </div>
+        </div>
+
         <div class="field">
-          <label for="f-red">Tipo de conductor</label>
-          <select id="f-red" required>
-            <option value="Aereo">Aéreo</option>
-            <option value="Subterraneo">Subterráneo</option>
+          <label for="f-calibre">Calibre del conductor</label>
+          <select id="f-calibre" required disabled>
+            <option value="">Seleccione un material primero</option>
           </select>
         </div>
+
         <div class="field">
-          <label for="f-material">Material del conductor</label>
-          <select id="f-material" required></select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-calibre">Calibre del conductor</label>
-        <select id="f-calibre" required disabled>
-          <option value="">Seleccione un material primero</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="f-area">Área del conductor (mm²)</label>
-        <div class="input-with-toggle">
-          <input type="number" id="f-area" min="0" max="10000" step="0.01" required disabled>
-          <label class="checkbox-row"><input type="checkbox" id="chk-area"> Manual</label>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-constante">Constante del material</label>
-        <div class="input-with-toggle">
-          <input type="number" id="f-constante" min="0" max="500" step="1" required disabled>
-          <label class="checkbox-row"><input type="checkbox" id="chk-constante"> Manual</label>
-        </div>
-        <span class="hint">Para cobre 341, para aluminio 224</span>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="f-top">Temperatura de operación (°C)</label>
+          <label for="f-area">Área del conductor (mm²)</label>
           <div class="input-with-toggle">
-            <input type="number" id="f-top" min="0" max="500" step="0.1" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-top"> Manual</label>
+            <input type="number" id="f-area" min="0" max="10000" step="0.01" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-area"> Manual</label>
           </div>
-          <span class="hint">Típicos: aéreos desnudos 75°C, cubiertos y subterráneos MT: 90°C</span>
         </div>
+
         <div class="field">
-          <label for="f-tfalla">Temperatura máxima en falla (°C)</label>
+          <label for="f-constante">Constante del material</label>
           <div class="input-with-toggle">
-            <input type="number" id="f-tfalla" min="0" max="500" step="0.1" value="250" required disabled>
-            <label class="checkbox-row"><input type="checkbox" id="chk-tfalla"> Manual</label>
+            <input type="number" id="f-constante" min="0" max="500" step="1" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-constante"> Manual</label>
           </div>
-          <span class="hint">Sugerencia: revisar en ficha técnica del conductor</span>
+          <span class="hint">Para cobre 341, para aluminio 224</span>
         </div>
       </div>
 
-      <div class="field">
-        <label for="f-temp0">Temperatura de resistencia 0 (°C)</label>
-        <div class="input-with-toggle">
-          <input type="number" id="f-temp0" min="0" max="500" step="0.1" required disabled>
-          <label class="checkbox-row"><input type="checkbox" id="chk-temp0"> Manual</label>
+      <div class="form-section card">
+        <div class="form-section-title">${icon("bolt")} Condiciones de falla</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-top">Temperatura de operación (°C)</label>
+            <div class="input-with-toggle">
+              <input type="number" id="f-top" min="0" max="500" step="0.1" required disabled>
+              <label class="checkbox-row"><input type="checkbox" id="chk-top"> Manual</label>
+            </div>
+            <span class="hint">Típicos: aéreos desnudos 75°C, cubiertos y subterráneos MT: 90°C</span>
+          </div>
+          <div class="field">
+            <label for="f-tfalla">Temperatura máxima en falla (°C)</label>
+            <div class="input-with-toggle">
+              <input type="number" id="f-tfalla" min="0" max="500" step="0.1" value="250" required disabled>
+              <label class="checkbox-row"><input type="checkbox" id="chk-tfalla"> Manual</label>
+            </div>
+            <span class="hint">Sugerencia: revisar en ficha técnica del conductor</span>
+          </div>
         </div>
-        <span class="hint">Para cobre 234 °C, para aluminio 228 °C</span>
-      </div>
 
-      <div class="field">
-        <label for="f-tiempo">Tiempo de duración de la falla (s)</label>
-        <input type="number" id="f-tiempo" min="0" max="10" step="0.1" value="1" required>
+        <div class="field">
+          <label for="f-temp0">Temperatura de resistencia 0 (°C)</label>
+          <div class="input-with-toggle">
+            <input type="number" id="f-temp0" min="0" max="500" step="0.1" required disabled>
+            <label class="checkbox-row"><input type="checkbox" id="chk-temp0"> Manual</label>
+          </div>
+          <span class="hint">Para cobre 234 °C, para aluminio 228 °C</span>
+        </div>
+
+        <div class="field">
+          <label for="f-tiempo">Tiempo de duración de la falla (s)</label>
+          <input type="number" id="f-tiempo" min="0" max="10" step="0.1" value="1" required>
+        </div>
       </div>
 
       <div class="btn-row">
@@ -273,6 +277,10 @@ export async function render(container) {
       `Capacidad de cortocircuito: ${fmt(data.capacidadCcKa)} kA`,
     ].join("\n");
 
+    const scaleMax = Math.max(p.tempFallaC * 1.15, p.tempFallaC + 20);
+    const topPct = (p.tempOperacionC / scaleMax) * 100;
+    const tfallaPct = (p.tempFallaC / scaleMax) * 100;
+
     wrap.innerHTML = `
       <div class="card">
         <div class="tabs">
@@ -281,10 +289,22 @@ export async function render(container) {
           <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
-          <div class="result-panel">
-            <div class="result-metric">
+          <div class="result-report">
+            <div class="result-stat-hero">
               <div class="value">${fmt(data.capacidadCcKa)}<span class="unit">kA</span></div>
               <div class="label">Capacidad de corriente de cortocircuito</div>
+            </div>
+            <div class="result-thermal">
+              <div class="result-thermal-title">Margen térmico durante la falla</div>
+              <div class="result-thermal-track">
+                <div class="result-thermal-range" style="left:${topPct}%; width:${tfallaPct - topPct}%"></div>
+                <div class="result-thermal-marker" style="left:${topPct}%"></div>
+                <div class="result-thermal-marker end" style="left:${tfallaPct}%"></div>
+              </div>
+              <div class="result-thermal-labels">
+                <span>Operación: ${fmt(p.tempOperacionC, 0)}°C</span>
+                <span>Máxima en falla: ${fmt(p.tempFallaC, 0)}°C</span>
+              </div>
             </div>
           </div>
         </div>

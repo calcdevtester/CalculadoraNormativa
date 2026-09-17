@@ -24,7 +24,7 @@
   /* --- paleta clara: tomada de capturas reales de apps de Celsia
      (APP_PowerApps/Referentes_visuales) -- fondo gris muy claro, tarjetas
      blancas, texto pizarra oscuro. --- */
-  --bg: #f4f5f7;
+  --bg: #eceef1;
   --bg-elevated: #ffffff;
   --bg-sunken: #eef0f3;
   --bg-input: #ffffff;
@@ -82,6 +82,18 @@
   --tertiary-yellow: #fff65e;
   --tertiary-blue-dark: #003fa2;
   --tertiary-red: #ca0045;
+  --tertiary-blue-soft: #e6f3fb;
+
+  /* --- colores de los iconos de módulo en Inicio (solo tema claro): cada
+     módulo con un color distinto para diferenciarlos de un vistazo. En
+     tema oscuro se neutralizan más abajo, volviendo todos al naranja de
+     acento como antes. --- */
+  --tile-color-perdidas: var(--success);
+  --tile-bg-perdidas: var(--success-soft);
+  --tile-color-regulacion: var(--tertiary-blue);
+  --tile-bg-regulacion: var(--tertiary-blue-soft);
+  --tile-color-cortocircuito: var(--accent);
+  --tile-bg-cortocircuito: var(--accent-soft);
 }
 
 /* --- paleta oscura: neutros grises derivados del color secundario de
@@ -128,6 +140,13 @@
 
     --focus-ring: var(--accent);
     color-scheme: dark;
+
+    --tile-color-perdidas: var(--accent-surface-contrast);
+    --tile-bg-perdidas: var(--accent-surface-bg);
+    --tile-color-regulacion: var(--accent-surface-contrast);
+    --tile-bg-regulacion: var(--accent-surface-bg);
+    --tile-color-cortocircuito: var(--accent-surface-contrast);
+    --tile-bg-cortocircuito: var(--accent-surface-bg);
   }
 }
 
@@ -163,4 +182,11 @@
 
   --focus-ring: var(--accent);
   color-scheme: dark;
+
+  --tile-color-perdidas: var(--accent-surface-contrast);
+  --tile-bg-perdidas: var(--accent-surface-bg);
+  --tile-color-regulacion: var(--accent-surface-contrast);
+  --tile-bg-regulacion: var(--accent-surface-bg);
+  --tile-color-cortocircuito: var(--accent-surface-contrast);
+  --tile-bg-cortocircuito: var(--accent-surface-bg);
 }
