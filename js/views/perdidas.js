@@ -93,25 +93,12 @@ export async function render(container) {
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
-        <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
       </div>
     </form>
 
     <div id="resultado-wrap"></div>
 
-    <div class="card" id="panel-criterios" hidden style="margin-top: var(--space-4);">
-      <div class="criterios-content">${renderCriterios(CRITERIOS_PERDIDAS)}</div>
-    </div>
   `;
-
-  const btnCriterios = container.querySelector("#btn-criterios");
-  const panelCriterios = container.querySelector("#panel-criterios");
-  btnCriterios.addEventListener("click", () => {
-    panelCriterios.hidden = !panelCriterios.hidden;
-    if (!panelCriterios.hidden) {
-      panelCriterios.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  });
 
   const form = container.querySelector("#form-calc");
   const fTension = container.querySelector("#f-tension");
@@ -183,7 +170,7 @@ export async function render(container) {
         : "";
     const agregarBtn = esUltimo
       ? `<div class="btn-row" style="margin-top: var(--space-4);">
-          <button type="button" class="btn btn-agregar-tramo">${icon("plus")} Agregar nuevo tramo</button>
+          <button type="button" class="btn btn-agregar-tramo">${icon("plus")} Agregar tramo</button>
         </div>`
       : "";
     return `
@@ -514,6 +501,7 @@ TRAMO ${r.numero}:
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
           <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
+          <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
           <div class="result-report">
@@ -558,6 +546,9 @@ TRAMO ${r.numero}:
         </div>
         <div class="tab-panel" data-panel="formulas" hidden>
           <div class="formula-block">${escapeHtml(FORMULAS_HTML)}</div>
+        </div>
+        <div class="tab-panel" data-panel="criterios" hidden>
+          <div class="criterios-content">${renderCriterios(CRITERIOS_PERDIDAS)}</div>
         </div>
       </div>
     `;

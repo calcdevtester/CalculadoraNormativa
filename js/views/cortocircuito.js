@@ -125,25 +125,12 @@ export async function render(container) {
 
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">${icon("calculator")} Calcular</button>
-        <button type="button" class="btn" id="btn-criterios">${icon("info")} Criterios de cálculo</button>
       </div>
     </form>
 
     <div id="resultado-wrap"></div>
 
-    <div class="card" id="panel-criterios" hidden style="margin-top: var(--space-4);">
-      <div class="criterios-content">${renderCriterios(CRITERIOS_CORTOCIRCUITO)}</div>
-    </div>
   `;
-
-  const btnCriterios = container.querySelector("#btn-criterios");
-  const panelCriterios = container.querySelector("#panel-criterios");
-  btnCriterios.addEventListener("click", () => {
-    panelCriterios.hidden = !panelCriterios.hidden;
-    if (!panelCriterios.hidden) {
-      panelCriterios.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  });
 
   const form = container.querySelector("#form-calc");
   const selRed = container.querySelector("#f-red");
@@ -374,6 +361,7 @@ export async function render(container) {
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
           <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
+          <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
           <div class="result-report">
@@ -400,6 +388,9 @@ export async function render(container) {
         </div>
         <div class="tab-panel" data-panel="formulas" hidden>
           <div class="formula-block">${escapeHtml(FORMULAS_HTML)}</div>
+        </div>
+        <div class="tab-panel" data-panel="criterios" hidden>
+          <div class="criterios-content">${renderCriterios(CRITERIOS_CORTOCIRCUITO)}</div>
         </div>
       </div>
     `;
