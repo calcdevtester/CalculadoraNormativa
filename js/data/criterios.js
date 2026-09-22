@@ -118,6 +118,12 @@ export const regulacion = [
     type: "formula",
     tex: "\\Delta U = \\dfrac{P \\cdot Z \\cdot L}{1000 \\cdot U \\cdot \\cos\\varphi} = \\dfrac{P \\cdot (R \\cdot \\cos\\varphi + X \\cdot \\text{sen}\\,\\varphi) \\cdot L}{1000 \\cdot U \\cdot \\cos\\varphi}",
   },
+  {
+    type: "paragraph",
+    text: "A partir de la potencia activa y el factor de potencia se obtienen también la potencia aparente y la potencia reactiva de la carga:",
+  },
+  { type: "formula", tex: "S = \\dfrac{P}{\\cos\\varphi}" },
+  { type: "formula", tex: "Q = \\sqrt{S^{2} - P^{2}}" },
   { type: "paragraph", text: "Donde:" },
   {
     type: "list",
@@ -126,7 +132,9 @@ export const regulacion = [
       "$Z$: Impedancia por fase (Ω/km)",
       "$L$: Longitud de la línea (km)",
       "$I$: Corriente de la línea (A)",
-      "$P$: Potencia trifásica transportada (kW)",
+      "$P$: Potencia trifásica activa transportada (kW)",
+      "$S$: Potencia aparente (kVA)",
+      "$Q$: Potencia reactiva (kVAR)",
       "$U$: Tensión compuesta (fase-fase) (kV)",
       "$\\varphi$: Angulo del factor de potencia del circuito",
       "$R$: Resistencia del conductor (Ω/km)",
@@ -151,6 +159,10 @@ export const regulacion = [
   { type: "formula", tex: "K_v = \\dfrac{\\Psi}{10 \\cdot U^{2}}" },
   { type: "paragraph", text: "Finalmente para calcular el porcentaje de caída de tensión se usa la siguiente expresión:" },
   { type: "formula", tex: "\\%\\Delta V = P \\cdot L \\cdot K_v" },
+  {
+    type: "paragraph",
+    text: "Cuando el circuito tiene **varios tramos** (distinto conductor, geometría de fases o longitud en cada uno), el porcentaje de caída de tensión total corresponde a la suma del porcentaje de cada tramo, siempre que la corriente sea la misma a lo largo de todo el circuito, es decir, sin cargas intermedias entre tramos.",
+  },
   { type: "hr" },
   { type: "heading", text: "Apéndice A, cálculo de reactancia del conductor" },
   { type: "paragraph", text: "Para el cálculo de la reactancia partimos de la siguiente expresión:" },
@@ -261,5 +273,92 @@ export const cortocircuito = [
       ["Cobre", "PVC", "115"],
       ["Cobre", "Desnudo", "143"],
     ],
+  },
+  {
+    type: "paragraph",
+    text: "En esta calculadora, la capacidad de cortocircuito se expresa en **kA**: el resultado de $I_{CC}$ obtenido con cualquiera de las dos expresiones anteriores (en A) se divide entre 1000.",
+  },
+];
+
+export const ampacidad = [
+  { type: "heading", text: "Ampacidad de conductores aéreos (IEEE Std 738)" },
+  {
+    type: "paragraph",
+    text: "La ampacidad de un conductor aéreo en régimen permanente se obtiene del **balance térmico** del conductor: la corriente máxima admisible es aquella para la cual el calor disipado por convección y radiación, más el calor ganado por radiación solar, se equilibra con el calentamiento resistivo del conductor.",
+  },
+  { type: "formula", tex: "Q_c + Q_r = Q_s + I^{2} \\cdot R" },
+  { type: "paragraph", text: "Despejando la corriente se obtiene la ampacidad:" },
+  { type: "formula", tex: "I = \\sqrt{\\dfrac{Q_c + Q_r - Q_s}{R}}" },
+  { type: "paragraph", text: "Con:" },
+  {
+    type: "formula",
+    tex: "Q_c = \\max(Q_{cn},\\, Q_{c1},\\, Q_{c2})",
+  },
+  {
+    type: "formula",
+    tex: "Q_r = 17.8 \\cdot D \\cdot \\varepsilon \\cdot \\left[\\left(\\dfrac{T_c+273}{100}\\right)^{4} - \\left(\\dfrac{T_a+273}{100}\\right)^{4}\\right]",
+  },
+  { type: "formula", tex: "Q_s = \\alpha \\cdot Q_{se} \\cdot \\text{sen}\\,\\theta \\cdot D" },
+  {
+    type: "paragraph",
+    text: "$Q_c$ es el calor perdido por convección: $Q_{cn}$ corresponde a convección natural y $Q_{c1}$, $Q_{c2}$ a dos correlaciones de convección forzada (bajo y alto régimen de viento); se toma la de mayor valor. $Q_r$ es el calor perdido por radiación y $Q_s$ el calor ganado por radiación solar absorbida.",
+  },
+  {
+    type: "paragraph",
+    text: "La resistencia AC del conductor se evalúa a la temperatura máxima admisible $T_c$, interpolando linealmente entre los valores conocidos a 25°C y 75°C:",
+  },
+  { type: "formula", tex: "R = R_{25} + \\dfrac{R_{75} - R_{25}}{75 - 25} \\cdot (T_c - 25)" },
+  { type: "paragraph", text: "Donde:" },
+  {
+    type: "list",
+    items: [
+      "$I$: Ampacidad — corriente admisible en régimen permanente (A)",
+      "$D$: Diámetro del conductor (m)",
+      "$R$: Resistencia AC del conductor a $T_c$ (Ω/m)",
+      "$\\varepsilon$: Emisividad del conductor",
+      "$\\alpha$: Absortividad del conductor",
+      "$T_a$: Temperatura ambiente (°C)",
+      "$T_c$: Temperatura máxima admisible del conductor (°C)",
+      "$Q_{se}$: Radiación solar total incidente (W/m²)",
+      "$\\theta$: Ángulo efectivo de incidencia solar",
+    ],
+  },
+  {
+    type: "paragraph",
+    text: "**Nota:** en esta calculadora, $Q_{se}$ y $\\theta$ se ingresan de forma manual (o se usan valores por defecto); el cálculo de posición solar del estándar completo, a partir de fecha, hora y latitud, no está implementado.",
+  },
+  { type: "hr" },
+  { type: "heading", text: "Ampacidad de cables subterráneos (IEC 60287-1-1)" },
+  {
+    type: "paragraph",
+    text: "Para cables subterráneos en banco de ductos, en régimen permanente, la ampacidad se obtiene del balance térmico entre el conductor y el terreno, considerando la resistencia AC del conductor, la pérdida dieléctrica del aislamiento, el factor de pérdidas por corrientes inducidas en la pantalla, y las resistencias térmicas de cada capa del cable más la del terreno:",
+  },
+  {
+    type: "formula",
+    tex: "I = \\sqrt{\\dfrac{\\Delta\\theta - W_d\\left(0.5\\,T_1 + n\\,(T_2+T_3+T_4)\\right)}{n \\cdot R\\left[\\dfrac{T_1}{n} + (1+\\lambda_1)(T_2+T_3+T_4)\\right]}}",
+  },
+  {
+    type: "paragraph",
+    text: "La resistencia térmica externa $T_4$, entre el ducto del conductor activo y el terreno, se calcula con el **método de imágenes de Kennelly**, sumando el acoplamiento térmico propio del ducto y el aporte mutuo de los demás ductos del banco.",
+  },
+  { type: "paragraph", text: "Donde:" },
+  {
+    type: "list",
+    items: [
+      "$I$: Ampacidad — corriente admisible en régimen permanente (A)",
+      "$R$: Resistencia AC efectiva del conductor, incluyendo efecto piel y de proximidad (Ω/m)",
+      "$W_d$: Pérdida dieléctrica del aislamiento (W/m)",
+      "$\\lambda_1$: Factor de pérdidas por corrientes inducidas/circulantes en la pantalla",
+      "$T_1$: Resistencia térmica del aislamiento (K·m/W)",
+      "$T_2$: Resistencia térmica de la cubierta/relleno (K·m/W)",
+      "$T_3$: Resistencia térmica de la chaqueta exterior (K·m/W)",
+      "$T_4$: Resistencia térmica externa, suelo más ducto (K·m/W)",
+      "$\\Delta\\theta$: Salto térmico admisible entre el conductor y el terreno (°C)",
+      "$n$: Número de conductores cargados dentro de la cubierta (1 para cable tripolar, 3 para un circuito de cables monopolares)",
+    ],
+  },
+  {
+    type: "paragraph",
+    text: "**Limitaciones conocidas de esta implementación:** no distingue formación en trébol de formación plana — usa la misma fórmula de proximidad para ambas — y únicamente calcula régimen permanente (no transitorio ni secado del suelo).",
   },
 ];
