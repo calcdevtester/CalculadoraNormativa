@@ -529,7 +529,7 @@ TRAMO ${r.numero}:
               </div>
               <div class="result-gauge-info">
                 <div class="result-gauge-title">Porcentaje de pérdidas total <span class="badge ${estado.cls}">${estado.label}</span></div>
-                <div class="result-gauge-desc">Óptimo hasta 1% · Aceptable hasta 3% · Fuera de norma sobre 3%</div>
+                <div class="result-gauge-desc">Óptimo hasta 1% · Aceptable hasta 3% · Elevado sobre 3%</div>
                 <div class="result-gauge-current">${fmt(primero.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
             </div>

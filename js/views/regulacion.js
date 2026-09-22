@@ -635,7 +635,7 @@ TRAMO ${r.numero}:
               </div>
               <div class="result-gauge-info">
                 <div class="result-gauge-title">Caída de tensión total <span class="badge ${estado.cls}">${estado.label}</span></div>
-                <div class="result-gauge-desc">Óptimo hasta 5% · Aceptable hasta 10% · Fuera de norma sobre 10%</div>
+                <div class="result-gauge-desc">Óptimo hasta 5% · Aceptable hasta 10% · Elevado sobre 10%</div>
                 <div class="result-gauge-current">${fmt(primero.corriente)}<span class="unit">A · Corriente</span></div>
               </div>
             </div>

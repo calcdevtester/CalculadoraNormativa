@@ -2,7 +2,7 @@
 // por un umbral normativo (verde/amarillo/rojo). Cada vista define su propio
 // GAUGE_MAX y breakpoints [b1, b2] segun el criterio que le aplique.
 
-export function estadoGauge(value, breakpoints, labels = ["Óptimo", "Aceptable", "Fuera de norma"]) {
+export function estadoGauge(value, breakpoints, labels = ["Óptimo", "Aceptable", "Elevado"]) {
   const [b1, b2] = breakpoints;
   if (value <= b1) return { label: labels[0], cls: "badge-success" };
   if (value <= b2) return { label: labels[1], cls: "badge-warning" };
