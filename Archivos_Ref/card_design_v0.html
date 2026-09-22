@@ -1,0 +1,134 @@
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #151515; }
+  .container { padding: 20px; }
+  .section { margin-bottom: 40px; }
+  .section-title { font-size: 13px; font-weight: 700; color: #f55f14; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  
+  .card { background: #1b1b1c; border: 0.5px solid #2e2e2f; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .card-content { padding: 16px; }
+  
+  .sample-input { background: transparent; border: 0.5px solid #59595b; border-radius: 6px; padding: 10px 12px; color: #eeeef3; font-size: 13px; margin-top: 8px; }
+  
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 12px; color: #a8a8ac; font-weight: 600; margin-bottom: 6px; }
+  
+  /* ALT 1: Cambios mínimos */
+  .alt1-header { background: #212122; padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #59595b; }
+  .alt1-icon { width: 20px; height: 20px; flex-shrink: 0; font-size: 18px; }
+  .alt1-title { font-size: 12px; font-weight: 700; color: #eeeef3; letter-spacing: 0.5px; }
+  
+  /* ALT 2: Naranja suave en encabezado */
+  .alt2-header { background: linear-gradient(135deg, rgba(245,95,20,0.15) 0%, rgba(245,95,20,0.08) 100%); padding: 14px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #c74d10; }
+  .alt2-icon { width: 24px; height: 24px; flex-shrink: 0; background: rgba(245,95,20,0.3); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #f55f14; font-size: 16px; }
+  .alt2-title { font-size: 13px; font-weight: 700; color: #eeeef3; }
+  
+  /* ALT 3: Borde izquierdo + icono naranja */
+  .alt3-header { padding: 14px 16px; display: flex; align-items: center; gap: 12px; border-left: 4px solid #f55f14; background: #212122; }
+  .alt3-icon { width: 32px; height: 32px; flex-shrink: 0; background: #c74d10; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px; }
+  .alt3-content { flex: 1; }
+  .alt3-title { font-size: 13px; font-weight: 700; color: #eeeef3; margin: 0; }
+  .alt3-subtitle { font-size: 11px; color: #7c7c7f; margin: 2px 0 0 0; }
+  
+  /* ALT 4: Diseño radical - icono grande + diagonal */
+  .alt4-header { background: linear-gradient(135deg, #c74d10 0%, #942609 100%); padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; position: relative; overflow: hidden; }
+  .alt4-header::after { content: ''; position: absolute; top: -20px; right: -40px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+  .alt4-content { position: relative; z-index: 1; }
+  .alt4-title { font-size: 14px; font-weight: 700; color: #ffffff; margin: 0; }
+  .alt4-desc { font-size: 11px; color: rgba(255,255,255,0.8); margin: 4px 0 0 0; }
+  .alt4-icon { width: 40px; height: 40px; flex-shrink: 0; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 22px; position: relative; z-index: 1; }
+</style>
+
+<div class="container">
+  
+  <div class="section">
+    <div class="section-title">Alternativa 1: Cambios mínimos (actual mejorado)</div>
+    <div class="card">
+      <div class="alt1-header">
+        <span class="alt1-icon">⚡</span>
+        <span class="alt1-title">DATOS DE LA LÍNEA</span>
+      </div>
+      <div class="card-content">
+        <div class="field-group">
+          <div class="field-label">Nivel de tensión (kV)</div>
+          <input type="text" class="sample-input" value="34.5" readonly>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Potencia activa (kW)</div>
+          <input type="text" class="sample-input" value="10000" readonly>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 12px; color: #a8a8ac; margin: 0;">Cambios: Mejor contraste en encabezado, separador claro, mantiene estructura actual.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Alternativa 2: Cambios moderados (naranja suave)</div>
+    <div class="card">
+      <div class="alt2-header">
+        <div class="alt2-icon">⚡</div>
+        <span class="alt2-title">Datos de la línea</span>
+      </div>
+      <div class="card-content">
+        <div class="field-group">
+          <div class="field-label">Nivel de tensión (kV)</div>
+          <input type="text" class="sample-input" value="34.5" readonly>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Potencia activa (kW)</div>
+          <input type="text" class="sample-input" value="10000" readonly>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 12px; color: #a8a8ac; margin: 0;">Cambios: Fondo naranja suave con gradiente, icono en caja redondeada, borde inferior naranja.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Alternativa 3: Cambios significativos (acento lateral)</div>
+    <div class="card">
+      <div class="alt3-header">
+        <div class="alt3-icon">⚡</div>
+        <div class="alt3-content">
+          <div class="alt3-title">Datos de la línea</div>
+          <div class="alt3-subtitle">Parámetros principales de la línea</div>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="field-group">
+          <div class="field-label">Nivel de tensión (kV)</div>
+          <input type="text" class="sample-input" value="34.5" readonly>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Potencia activa (kW)</div>
+          <input type="text" class="sample-input" value="10000" readonly>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 12px; color: #a8a8ac; margin: 0;">Cambios: Borde izquierdo naranja grueso, icono grande coloreado, subtítulo descriptivo.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Alternativa 4: Cambios radicales (diseño innovador)</div>
+    <div class="card">
+      <div class="alt4-header">
+        <div class="alt4-content">
+          <div class="alt4-title">Datos de la línea</div>
+          <div class="alt4-desc">Parámetros principales</div>
+        </div>
+        <div class="alt4-icon">⚡</div>
+      </div>
+      <div class="card-content">
+        <div class="field-group">
+          <div class="field-label">Nivel de tensión (kV)</div>
+          <input type="text" class="sample-input" value="34.5" readonly>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Potencia activa (kW)</div>
+          <input type="text" class="sample-input" value="10000" readonly>
+        </div>
+      </div>
+    </div>
+    <p style="font-size: 12px; color: #a8a8ac; margin: 0;">Cambios: Encabezado naranja con gradiente, ícono grande a la derecha, fondo coloreado, diseño más dinámico.</p>
+  </div>
+
+</div>
