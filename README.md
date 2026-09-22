@@ -45,9 +45,9 @@ para el radio medio geométrico, igual que los campos de entrada de la app origi
 
 ## Decisiones de fidelidad
 
-- **Pérdidas**: el % de pérdidas usa el factor lineal `0.7·Fc + 0.3`, no la forma
-  cuadrática de Buller-Woodrow documentada en el panel de "Criterios de cálculo"
-  de la propia app original — se replica el comportamiento real en producción.
+- **Pérdidas**: el % de pérdidas usa el factor de pérdidas en su forma cuadrática
+  de Buller-Woodrow `0.7·Fc² + 0.3·Fc`, igual que documenta el panel de "Criterios
+  de cálculo" de la propia app original.
 - **Regulación**: `ImpedanciaEficaz` se calcula en el original pero no se usa en
   ninguna fórmula final ni se muestra — variable muerta de la app original,
   conservada como intermedio informativo sin mostrar, igual que el original.

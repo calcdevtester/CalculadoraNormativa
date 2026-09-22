@@ -84,7 +84,7 @@ export async function render(container) {
           <div class="field">
             <label for="f-fc">Factor de carga (FC)</label>
             <input type="number" id="f-fc" min="0" max="1" step="0.01" value="1" required>
-            <span class="hint">Circuitos de uso FC=1, conexiones solares FC=0.564</span>
+            <span class="hint">Circuitos de uso FC=1, conexiones solares FC= 0.28 a 0.53</span>
           </div>
         </div>
       </div>

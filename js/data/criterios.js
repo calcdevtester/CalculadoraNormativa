@@ -33,6 +33,12 @@ export const perdidas = [
   { type: "paragraph", text: "Con:" },
   { type: "formula", tex: "P = \\sqrt{3} \\cdot U \\cdot I \\cdot \\cos\\varphi" },
   { type: "formula", tex: "I = \\dfrac{P}{\\sqrt{3} \\cdot U \\cdot \\cos\\varphi}" },
+  {
+    type: "paragraph",
+    text: "A partir de la potencia activa y el factor de potencia se obtienen también la potencia aparente y la potencia reactiva de la carga:",
+  },
+  { type: "formula", tex: "S = \\dfrac{P}{\\cos\\varphi}" },
+  { type: "formula", tex: "Q = \\sqrt{S^{2} - P^{2}}" },
   { type: "paragraph", text: "Donde:" },
   {
     type: "list",
@@ -41,7 +47,9 @@ export const perdidas = [
       "$R$: Resistencia del conductor (Ω/km)",
       "$L$: Longitud de la línea (km)",
       "$I$: Corriente de la línea (A)",
-      "$P$: Potencia trifásica transportada (kW)",
+      "$P$: Potencia trifásica activa transportada (kW)",
+      "$S$: Potencia aparente (kVA)",
+      "$Q$: Potencia reactiva (kVAR)",
       "$U$: Tensión compuesta (fase-fase) (kV)",
       "$\\cos\\varphi$: Factor de potencia de la carga (FP)",
     ],
@@ -88,6 +96,10 @@ export const perdidas = [
   {
     type: "paragraph",
     text: "Cuando la potencia promedio es igual a la potencia máxima, el factor de carga es igual a 1 (Fc=1), por lo que el factor de pérdidas también resulta igual a 1 (Fp=1). En este caso se obtiene la condición más crítica de operación del circuito y la expresión anterior se reduce a la ecuación original del porcentaje de pérdidas.",
+  },
+  {
+    type: "paragraph",
+    text: "Cuando el circuito tiene **varios tramos** (distinto conductor, resistencia o longitud en cada uno), el porcentaje de pérdidas total corresponde a la suma del porcentaje de cada tramo, siempre que la corriente sea la misma a lo largo de todo el circuito, es decir, sin cargas intermedias entre tramos.",
   },
 ];
 
