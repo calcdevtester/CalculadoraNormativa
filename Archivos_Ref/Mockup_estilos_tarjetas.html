@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  Mockup de referencia de los 4 estilos de acentuacion de la barra de
+  titulo de tarjeta, probados en vivo en la pantalla de Conductor
+  economico (js/views/conductor-economico.js). Carga los CSS reales de
+  la app (css/tokens.css y css/app.css) en vez de duplicar estilos, para
+  que este mockup nunca quede desincronizado del diseno real: si esas
+  hojas de estilo cambian, este archivo refleja el cambio al recargarlo.
+
+  Clases probadas (definidas en css/app.css, buscar "Prueba temporal: 4
+  variantes de acentuacion de la barra de titulo"):
+    - card-accent-wash     -> degradado tenue (accent-soft -> transparente)
+    - card-accent-solido   -> mismo tono que wash pero solido, sin degradar
+    - card-accent-topbar   -> linea superior de color
+    - title-accentuado     -> combinable: icono en color de acento + texto
+                               mas claro (en vez del gris muted por defecto)
+-->
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — estilos de tarjeta</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/app.css">
+<style>
+  .mockup-shell { max-width: 900px; margin: 0 auto; padding: var(--space-6) var(--space-5); }
+  .mockup-note { color: var(--text-muted); font-size: 0.85rem; margin-bottom: var(--space-5); }
+  .mockup-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+</style>
+</head>
+<body>
+  <div class="mockup-shell">
+    <div class="mockup-header">
+      <h1 class="page-title" style="margin-bottom: 0;">Mockup — estilos de tarjeta</h1>
+      <!-- Mismo boton/logica de tema que el topbar real (ver js/app.js): alterna
+           data-theme en <html> y persiste la eleccion en localStorage. -->
+      <button type="button" class="icon-btn" id="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro"></button>
+    </div>
+    <p class="mockup-note">Referencia visual de las 4 variantes probadas en Conductor económico. Este archivo carga los CSS reales de la app (no duplica estilos): para actualizarlo tras un cambio de diseño, basta con recargarlo.</p>
+
+    <div class="form-section card card-accent-wash">
+      <div class="form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14Z"/></svg>
+        Datos de la línea
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Nivel de tensión (kV)</label>
+          <input type="number" value="34.5" disabled>
+        </div>
+        <div class="field">
+          <label>Dato de partida</label>
+          <select disabled><option>Potencia activa</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section card card-accent-solido title-accentuado" style="margin-top: var(--space-4);">
+      <div class="form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 9.7c0-1.5-1.34-2.7-3-2.7s-3 1.2-3 2.7c0 3.3 6 1.6 6 4.9 0 1.5-1.34 2.7-3 2.7s-3-1.2-3-2.7"/></svg>
+        Supuestos económicos
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Años de análisis</label>
+          <input type="number" value="25" disabled>
+        </div>
+        <div class="field">
+          <label>Tasa de descuento (%)</label>
+          <input type="number" value="10" disabled>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section card card-accent-topbar" style="margin-top: var(--space-4);">
+      <div class="form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="3"/><rect x="7" y="5" width="10" height="4" rx="1" fill="var(--bg-elevated)"/><circle cx="8.5" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="12" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="15.5" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="8.5" cy="17" r="1.3" fill="var(--bg-elevated)"/><circle cx="12" cy="17" r="1.3" fill="var(--bg-elevated)"/><circle cx="15.5" cy="17" r="1.3" fill="var(--bg-elevated)"/></svg>
+        Conductor — Opción 1
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Tipo de red</label>
+          <select disabled><option>Aérea</option></select>
+        </div>
+        <div class="field">
+          <label>Material del conductor</label>
+          <select disabled><option>AAAC</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section card card-accent-topbar title-accentuado" style="margin-top: var(--space-4);">
+      <div class="form-section-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="3"/><rect x="7" y="5" width="10" height="4" rx="1" fill="var(--bg-elevated)"/><circle cx="8.5" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="12" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="15.5" cy="13" r="1.3" fill="var(--bg-elevated)"/><circle cx="8.5" cy="17" r="1.3" fill="var(--bg-elevated)"/><circle cx="12" cy="17" r="1.3" fill="var(--bg-elevated)"/><circle cx="15.5" cy="17" r="1.3" fill="var(--bg-elevated)"/></svg>
+        Conductor — Opción 2
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Tipo de red</label>
+          <select disabled><option>Aérea</option></select>
+        </div>
+        <div class="field">
+          <label>Material del conductor</label>
+          <select disabled><option>AAAC</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mismo patron de js/app.js (tema claro/oscuro persistido), simplificado
+    // para este mockup independiente: clave propia de localStorage y, a
+    // falta de preferencia guardada, arranca en oscuro (en vez de seguir la
+    // preferencia del SO) para coincidir con el <html data-theme="dark">
+    // inicial y evitar parpadeo al cargar.
+    const THEME_KEY = "mockup-estilos-tarjetas:theme";
+    const sunIcon = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+    const moonIcon = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.99 12.49a9 9 0 1 1-9.47-9.47c.4-.02.62.46.4.8a6 6 0 0 0 8.27 8.27c.34-.21.82 0 .8.4Z"/></svg>';
+    const toggle = document.getElementById("theme-toggle");
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      toggle.innerHTML = theme === "dark" ? sunIcon : moonIcon;
+      toggle.setAttribute("aria-pressed", String(theme === "dark"));
+    }
+
+    let stored = null;
+    try { stored = localStorage.getItem(THEME_KEY); } catch {}
+    applyTheme(stored || "dark");
+
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem(THEME_KEY, next); } catch {}
+    });
+  </script>
+</body>
+</html>

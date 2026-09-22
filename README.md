@@ -17,9 +17,16 @@ vanilla (HTML/CSS/JS, sin build step), siguiendo el mismo patrón de
   vez de dos pantallas separadas), portando las fórmulas y datos ya
   verificados de `Herramientas_HTML` (`js/calc/ampacidad-aerea.js` y
   `js/calc/ampacidad-subterranea.js`, más `data/construccion-cable-subterraneo.json`
-  para la variante subterránea). A diferencia de los otros tres módulos, no
-  tiene panel de "Criterios de cálculo" propio todavía (solo la pestaña de
-  fórmulas), porque ese contenido curado no se ha transcrito.
+  para la variante subterránea).
+- **Conductor económico** — compara de 2 a 5 opciones de conductor para una
+  línea nueva por su costo total actualizado (inversión inicial + valor
+  presente del costo de las pérdidas durante los años de análisis), usando
+  el mismo motor de cálculo de Pérdidas (`js/calc/perdidas.js`). Portado de
+  `Herramientas_HTML` (`js/calc/conductor-economico.js` y
+  `js/views/calc-conductor-economico.js`), adaptado al estilo visual y a los
+  catálogos de conductores de esta app (sin la capa de utilidades propia de
+  `Herramientas_HTML`: tooltips, tarjetas plegables y persistencia de
+  formulario entre pantallas, que esta app no usa en ningún otro módulo).
 
 ## Arquitectura
 

@@ -6,19 +6,6 @@ import { icon } from "../icons.js";
 import { renderCriterios } from "../util/criterios-render.js";
 import { cortocircuito as CRITERIOS_CORTOCIRCUITO } from "../data/criterios.js";
 
-const FORMULAS_HTML = `
-Capacidad de cortocircuito (I_CC):
-I_CC = A · k1 · √( log10((T2+λ)/(T1+λ)) / t ) / 1000     [kA]
-
-Con:
-  A  = área del conductor (mm²)
-  T1 = temperatura de operación (°C)
-  T2 = temperatura máxima admisible en falla (°C)
-  t  = tiempo de despeje de la falla (s)
-  λ  = temperatura de resistencia cero (típico: 234 Cobre / 228 Aluminio)
-  k1 = constante del material (típico: 341 Cobre / 224 Aluminio)
-`;
-
 export async function render(container) {
   const aereos = await loadData("conductores-aereos");
   const subterraneos = await loadData("conductores-subterraneos");
@@ -30,7 +17,7 @@ export async function render(container) {
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
-        <div class="form-section-title">${icon("calculator")} Conductor</div>
+        <div class="form-section-title">${icon("calculatorFill")} Conductor</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-red">Tipo de conductor</label>
@@ -71,7 +58,7 @@ export async function render(container) {
       </div>
 
       <div class="form-section card">
-        <div class="form-section-title">${icon("bolt")} Condiciones de falla</div>
+        <div class="form-section-title">${icon("boltFill")} Condiciones de falla</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-top">Temperatura de operación (°C)</label>
@@ -107,7 +94,7 @@ export async function render(container) {
       </div>
 
       <div class="form-section card">
-        <div class="form-section-title">${icon("ruler")} Sugerencia de calibre</div>
+        <div class="form-section-title">${icon("rulerFill")} Sugerencia de calibre</div>
         <p class="text-muted text-sm" style="margin: 0 0 var(--space-3);">
           Indique la corriente de cortocircuito (ICC) que debe soportar el conductor y se sugiere el calibre más económico (menor sección) del mismo tipo de conductor y material seleccionados arriba que la cumple.
         </p>
@@ -360,7 +347,6 @@ export async function render(container) {
         <div class="tabs">
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
-          <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
           <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
@@ -385,9 +371,6 @@ export async function render(container) {
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>
           <div class="report-block">${escapeHtml(reporte)}</div>
-        </div>
-        <div class="tab-panel" data-panel="formulas" hidden>
-          <div class="formula-block">${escapeHtml(FORMULAS_HTML)}</div>
         </div>
         <div class="tab-panel" data-panel="criterios" hidden>
           <div class="criterios-content">${renderCriterios(CRITERIOS_CORTOCIRCUITO)}</div>

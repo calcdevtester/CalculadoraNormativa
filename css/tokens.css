@@ -83,6 +83,7 @@
   --tertiary-blue-dark: #003fa2;
   --tertiary-red: #ca0045;
   --tertiary-blue-soft: #e6f3fb;
+  --tertiary-green-soft: #e2faf3;
 
   /* --- colores de los iconos de módulo en Inicio (solo tema claro): cada
      módulo con un color distinto para diferenciarlos de un vistazo. En
@@ -96,6 +97,8 @@
   --tile-bg-cortocircuito: var(--accent-soft);
   --tile-color-ampacidad: var(--warning);
   --tile-bg-ampacidad: var(--warning-soft);
+  --tile-color-conductor-economico: var(--tertiary-green);
+  --tile-bg-conductor-economico: var(--tertiary-green-soft);
 }
 
 /* --- paleta oscura: neutros grises derivados del color secundario de
@@ -151,6 +154,8 @@
     --tile-bg-cortocircuito: var(--accent-surface-bg);
     --tile-color-ampacidad: var(--accent-surface-contrast);
     --tile-bg-ampacidad: var(--accent-surface-bg);
+    --tile-color-conductor-economico: var(--accent-surface-contrast);
+    --tile-bg-conductor-economico: var(--accent-surface-bg);
   }
 }
 
@@ -195,4 +200,6 @@
   --tile-bg-cortocircuito: var(--accent-surface-bg);
   --tile-color-ampacidad: var(--accent-surface-contrast);
   --tile-bg-ampacidad: var(--accent-surface-bg);
+  --tile-color-conductor-economico: var(--accent-surface-contrast);
+  --tile-bg-conductor-economico: var(--accent-surface-bg);
 }

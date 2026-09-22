@@ -5,8 +5,9 @@
 
 export const sidebarLinks = [
   { key: "", title: "Inicio", icon: "home", hash: "#/" },
-  { key: "perdidas", title: "Pérdidas", icon: "money", hash: "#/perdidas" },
-  { key: "regulacion", title: "Regulación", icon: "calculator", hash: "#/regulacion" },
+  { key: "perdidas", title: "Pérdidas", icon: "trendingDown", hash: "#/perdidas" },
+  { key: "regulacion", title: "Regulación", icon: "gauge", hash: "#/regulacion" },
   { key: "cortocircuito", title: "Cortocircuito", icon: "bolt", hash: "#/cortocircuito" },
   { key: "ampacidad", title: "Ampacidad", icon: "thermometer", hash: "#/ampacidad" },
+  { key: "conductor-economico", title: "Conductor económico", icon: "money", hash: "#/conductor-economico" },
 ];

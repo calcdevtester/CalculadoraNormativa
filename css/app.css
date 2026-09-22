@@ -98,15 +98,23 @@ button { font-family: inherit; }
 .content { flex: 1 1 auto; min-width: 0; padding: var(--space-5); padding-left: 24px; margin: 0; width: 100%; }
 
 .view-inicio { display: flex; flex-direction: column; min-height: 100%; }
-.view-inicio-footer { margin-top: auto; padding-top: var(--space-6); }
+/* Ancla la nota al fondo real del area de trabajo: cancela el padding
+   inferior de .content (que .view-inicio-footer hereda por estar dentro)
+   y le da un respiro propio mas chico, en vez de quedar a mitad de ese
+   padding con la falsa sensacion de no estar realmente al pie. */
+.view-inicio-footer { margin-top: auto; padding-top: var(--space-6); margin-bottom: calc(-1 * var(--space-5)); padding-bottom: var(--space-3); }
 
 .hero-banner {
   background-image: url("../assets/celsia_energia_.png");
   background-size: cover;
   background-position: right center;
-  border-radius: var(--radius-lg);
+  border-radius: 0;
+  /* Sangrado a los bordes: cancela el padding de .content por arriba/izq/der
+     (mismo valor que .content, var(--space-5)) para que quede pegado a la
+     topbar, al sidebar y al borde de la ventana; abajo conserva el margen
+     normal hacia "Módulos". */
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-4) calc(-1 * var(--space-5));
   padding: var(--space-6) var(--space-5);
-  margin-bottom: var(--space-6);
   min-height: 150px;
   display: flex;
   flex-direction: column;
@@ -120,7 +128,11 @@ button { font-family: inherit; }
 .hero-banner .page-title { margin-bottom: var(--space-2); }
 .hero-banner .page-subtitle { margin-bottom: 0; }
 @media (max-width: 640px) {
-  .hero-banner { min-height: 110px; padding: var(--space-4); }
+  .hero-banner {
+    min-height: 110px;
+    padding: var(--space-4);
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-4) calc(-1 * var(--space-4));
+  }
   .hero-banner .page-title, .hero-banner .page-subtitle { max-width: 75%; }
   .hero-banner .page-title { font-size: 1.2rem; }
   .hero-banner .page-subtitle { font-size: 0.85rem; }
@@ -148,6 +160,7 @@ button { font-family: inherit; }
 }
 .card + .card { margin-top: var(--space-4); }
 #tramos-container:not(:empty),
+#opciones-container:not(:empty),
 #bloque-aerea:not([hidden]),
 #bloque-subterranea:not([hidden]) { margin-top: var(--space-4); }
 #resultado-wrap > .card { margin-top: var(--space-4); }
@@ -176,6 +189,7 @@ button { font-family: inherit; }
 .tile-icon-regulacion { background: var(--tile-bg-regulacion); color: var(--tile-color-regulacion); }
 .tile-icon-cortocircuito { background: var(--tile-bg-cortocircuito); color: var(--tile-color-cortocircuito); }
 .tile-icon-ampacidad { background: var(--tile-bg-ampacidad); color: var(--tile-color-ampacidad); }
+.tile-icon-conductor-economico { background: var(--tile-bg-conductor-economico); color: var(--tile-color-conductor-economico); }
 .menu-tile .tile-title { font-weight: 700; }
 .menu-tile .tile-desc { color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; }
 
@@ -186,14 +200,24 @@ button { font-family: inherit; }
 }
 
 /* ---------- forms ---------- */
+/* Barra de titulo de las tarjetas de entrada de cada calculadora ("Datos de
+   la linea", "Conductor - Tramo/Opcion N", etc.): borde superior de acento
+   en la tarjeta + icono relleno en color de acento + texto en color pleno
+   (en vez del gris muted). No aplica a las tarjetas de Inicio (tile-icon,
+   estilo aparte) ni a las de resultado (sin form-section-title). */
+.form-section.card { border-top: 3px solid var(--accent); }
 .form-section-title {
   display: flex; align-items: center; gap: var(--space-2);
-  color: var(--text-muted); font-size: 0.75rem; font-weight: 700;
+  color: var(--text); font-size: 0.75rem; font-weight: 700;
   letter-spacing: 0.04em; text-transform: uppercase;
-  padding-bottom: var(--space-2); margin-bottom: var(--space-4);
+  /* El padding-top de .card (24px) contra el padding-bottom propio del
+     titulo descentraba el icono/texto respecto al renglon: se sube el
+     titulo y se iguala su padding inferior para centrarlo (12px/12px). */
+  margin-top: calc(var(--space-3) - var(--space-5));
+  padding-bottom: var(--space-3); margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
-.form-section-title .icon { width: 14px; height: 14px; }
+.form-section-title .icon { width: 20px; height: 20px; color: var(--accent); }
 
 .field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
 .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
@@ -392,6 +416,7 @@ input:disabled, select:disabled { opacity: 0.55; }
     display: block; position: fixed; inset: var(--topbar-h) 0 0 0; background: rgba(6,10,16,0.4); z-index: 45;
   }
   .content { padding: var(--space-4); }
+  .view-inicio-footer { margin-bottom: calc(-1 * var(--space-4)); }
   .nav-toggle-btn { display: flex !important; }
 }
 .nav-toggle-btn { display: none; }

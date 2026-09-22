@@ -4,14 +4,14 @@ const MODULOS = [
   {
     title: "Pérdidas",
     desc: "Pérdidas de potencia en líneas trifásicas por efecto Joule.",
-    iconName: "money",
+    iconName: "trendingDown",
     tileClass: "tile-icon-perdidas",
     hash: "#/perdidas",
   },
   {
     title: "Regulación",
     desc: "Cálculo de regulación de tensión en alimentadores.",
-    iconName: "calculator",
+    iconName: "gauge",
     tileClass: "tile-icon-regulacion",
     hash: "#/regulacion",
   },
@@ -28,6 +28,13 @@ const MODULOS = [
     iconName: "thermometer",
     tileClass: "tile-icon-ampacidad",
     hash: "#/ampacidad",
+  },
+  {
+    title: "Conductor económico",
+    desc: "Cálculo de conductor económico.",
+    iconName: "money",
+    tileClass: "tile-icon-conductor-economico",
+    hash: "#/conductor-economico",
   },
 ];
 

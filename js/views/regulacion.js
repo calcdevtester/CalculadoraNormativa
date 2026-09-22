@@ -18,23 +18,6 @@ import { estadoGauge, buildGaugeSvg } from "../util/gauge.js";
 const GAUGE_MAX = 15;
 const GAUGE_BREAKPOINTS = [5, 10];
 
-const FORMULAS_HTML = `
-Corriente: I = P / (V·cos φ·√3)         [A]
-Potencia aparente: S = P / cos φ        [kVA]
-Potencia reactiva: Q = √(S² − P²)       [kVAR]
-Radio medio geométrico: RMG             [m]
-
-Reactancia inductiva: Xl = 0.0754·ln( ∛(Dab·Dac·Dbc) / RMG )     [Ω/km]
-Factor de regulación: Fr = R + Xl·tan φ
-Constante de regulación: K  = Fr / (10·V²)
-
-% Caída de tensión (por tramo) = (P·L·Fr) / (10·V²)
-
-Para circuitos de varios tramos, el % de caída de tensión total es la suma
-del % de cada tramo (válido cuando la corriente es la misma en todo el
-circuito, es decir, sin cargas intermedias entre tramos).
-`;
-
 const TRAMO_COLORS = ["var(--accent)", "var(--tertiary-blue)", "var(--tertiary-green)", "var(--warning)", "var(--danger)"];
 
 // RMG equivalente de un haz de N subconductores identicos, equiespaciados
@@ -60,7 +43,7 @@ export async function render(container) {
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
-        <div class="form-section-title">${icon("bolt")} Datos de la línea</div>
+        <div class="form-section-title">${icon("boltFill")} Datos de la línea</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-tension">Nivel de tensión (kV)</label>
@@ -186,7 +169,7 @@ export async function render(container) {
       : "";
     return `
       <div class="form-section card tramo-block" data-id="${id}">
-        <div class="form-section-title">${icon("calculator")} Conductor — Tramo ${num}${quitarBtn}</div>
+        <div class="form-section-title">${icon("calculatorFill")} Conductor — Tramo ${num}${quitarBtn}</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-red-${id}">Tipo de red</label>
@@ -606,7 +589,6 @@ TRAMO ${r.numero}:
         <div class="tabs">
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
-          <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
           <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
@@ -644,9 +626,6 @@ TRAMO ${r.numero}:
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>
           <div class="report-block">${escapeHtml(reporte)}</div>
-        </div>
-        <div class="tab-panel" data-panel="formulas" hidden>
-          <div class="formula-block">${escapeHtml(FORMULAS_HTML)}</div>
         </div>
         <div class="tab-panel" data-panel="criterios" hidden>
           <div class="criterios-content">${renderCriterios(CRITERIOS_REGULACION)}</div>

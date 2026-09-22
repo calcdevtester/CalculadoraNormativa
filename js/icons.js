@@ -20,6 +20,24 @@ const icons = {
   moon: `<path d="M20.99 12.49a9 9 0 1 1-9.47-9.47c.4-.02.62.46.4.8a6 6 0 0 0 8.27 8.27c.34-.21.82 0 .8.4Z"/>`,
   plus: `<path d="M12 5v14"/><path d="M5 12h14"/>`,
   thermometer: `<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>`,
+  coin: `<circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 9.7c0-1.5-1.34-2.7-3-2.7s-3 1.2-3 2.7c0 3.3 6 1.6 6 4.9 0 1.5-1.34 2.7-3 2.7s-3-1.2-3-2.7"/>`,
+  trendingDown: `<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>`,
+  gauge: `<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>`,
+  // Version "rellena" (estilo PowerApps: Outline vs Filled) de calculator,
+  // para probar en las barras de titulo de Conductor economico. A diferencia
+  // del resto (trazo, hereda currentColor via stroke), esta define su propio
+  // fill por elemento para verse bien sin depender de fill/stroke del <svg>.
+  // Las "teclas" usan var(--bg-elevated) -- el mismo color de fondo de la
+  // tarjeta -- para simular un recorte que se adapta solo a tema claro/oscuro,
+  // en vez de un blanco fijo que no funciona en tema claro.
+  calculatorFill: `<rect x="4" y="2" width="16" height="20" rx="3" fill="currentColor" stroke="none"/><rect x="7" y="5" width="10" height="4" rx="1" fill="var(--bg-elevated)" stroke="none"/><circle cx="8.5" cy="13" r="1.3" fill="var(--bg-elevated)" stroke="none"/><circle cx="12" cy="13" r="1.3" fill="var(--bg-elevated)" stroke="none"/><circle cx="15.5" cy="13" r="1.3" fill="var(--bg-elevated)" stroke="none"/><circle cx="8.5" cy="17" r="1.3" fill="var(--bg-elevated)" stroke="none"/><circle cx="12" cy="17" r="1.3" fill="var(--bg-elevated)" stroke="none"/><circle cx="15.5" cy="17" r="1.3" fill="var(--bg-elevated)" stroke="none"/>`,
+  // Mismo criterio de calculatorFill (fill por elemento, "teclas"/detalles
+  // recortados con var(--bg-elevated)) para el resto de iconos usados en
+  // barras de titulo de tarjeta, con la version "rellena" del set.
+  boltFill: `<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14Z" fill="currentColor" stroke="none"/>`,
+  thermometerFill: `<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" fill="currentColor" stroke="none"/>`,
+  coinFill: `<circle cx="12" cy="12" r="9" fill="currentColor" stroke="none"/><path d="M12 7v10" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round"/><path d="M15 9.7c0-1.5-1.34-2.7-3-2.7s-3 1.2-3 2.7c0 3.3 6 1.6 6 4.9 0 1.5-1.34 2.7-3 2.7s-3-1.2-3-2.7" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  rulerFill: `<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z" fill="currentColor" stroke="none"/><path d="m14.5 12.5 2-2" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round"/><path d="m11.5 9.5 2-2" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round"/><path d="m8.5 6.5 2-2" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round"/><path d="m17.5 15.5 2-2" fill="none" stroke="var(--bg-elevated)" stroke-width="1.6" stroke-linecap="round"/>`,
 };
 
 export function icon(name, cls = "") {

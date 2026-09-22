@@ -14,20 +14,6 @@ import { renderCriterios } from "../util/criterios-render.js";
 import { perdidas as CRITERIOS_PERDIDAS } from "../data/criterios.js";
 import { estadoGauge, buildGaugeSvg } from "../util/gauge.js";
 
-const FORMULAS_HTML = `
-Corriente: I = P / (V·cos φ·√3)         [A]
-Potencia aparente: S = P / cos φ        [kVA]
-Potencia reactiva: Q = √(S² − P²)       [kVAR]
-
-Factor de pérdidas: Fp = 0.7·Fc + 0.3 (forma lineal)
-Porcentaje de Pérdidas (por tramo) = (√3·R·L·I·Fp) / (10·V·cos φ)     [%]
-
-Para circuitos de varios tramos, el % de pérdidas total es la suma del % de
-cada tramo (válido cuando la corriente es la misma en todo el circuito, es
-decir, sin cargas intermedias entre tramos).
-
-Nota: se usa la forma lineal del factor de pérdidas (0.7·Fc + 0.3), no la forma cuadrática clásica de Buller-Woodrow (0.7·Fc² + 0.3·Fc) que aparece documentada en el panel de "Criterios de cálculo".`;
-
 // Velocímetro de % de pérdidas: 0-1% óptimo, 1-3% aceptable, 3%+ fuera de norma.
 // GAUGE_MAX define el 100% de la escala visual; valores por encima se recortan
 // en la aguja pero el numero mostrado siempre es el real.
@@ -47,7 +33,7 @@ export async function render(container) {
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
-        <div class="form-section-title">${icon("bolt")} Datos de la línea</div>
+        <div class="form-section-title">${icon("boltFill")} Datos de la línea</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-tension">Nivel de tensión (kV)</label>
@@ -175,7 +161,7 @@ export async function render(container) {
       : "";
     return `
       <div class="form-section card tramo-block" data-id="${id}">
-        <div class="form-section-title">${icon("calculator")} Conductor — Tramo ${num}${quitarBtn}</div>
+        <div class="form-section-title">${icon("calculatorFill")} Conductor — Tramo ${num}${quitarBtn}</div>
         <div class="grid-2">
           <div class="field">
             <label for="f-red-${id}">Tipo de red</label>
@@ -500,7 +486,6 @@ TRAMO ${r.numero}:
         <div class="tabs">
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
-          <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
           <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         <div class="tab-panel" data-panel="resultado">
@@ -543,9 +528,6 @@ TRAMO ${r.numero}:
         </div>
         <div class="tab-panel" data-panel="reporte" hidden>
           <div class="report-block">${escapeHtml(reporte)}</div>
-        </div>
-        <div class="tab-panel" data-panel="formulas" hidden>
-          <div class="formula-block">${escapeHtml(FORMULAS_HTML)}</div>
         </div>
         <div class="tab-panel" data-panel="criterios" hidden>
           <div class="criterios-content">${renderCriterios(CRITERIOS_PERDIDAS)}</div>

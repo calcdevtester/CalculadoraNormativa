@@ -7,43 +7,10 @@ import { fmt, loadData, distinct, escapeHtml } from "../util/format.js";
 import { calcularAmpacidadAerea } from "../calc/ampacidad-aerea.js";
 import { calcularAmpacidadSubterranea } from "../calc/ampacidad-subterranea.js";
 import { icon } from "../icons.js";
+import { renderCriterios } from "../util/criterios-render.js";
+import { ampacidad as CRITERIOS_AMPACIDAD } from "../data/criterios.js";
 
 const ORDEN_CALIBRES = ["1/0 AWG", "2/0 AWG", "3/0 AWG", "4/0 AWG", "250 kcmil", "350 kcmil", "500 kcmil", "750 kcmil", "1000 kcmil"];
-
-const FORMULAS_AEREA = `Metodología IEEE Std 738 (balance térmico en régimen permanente):
-
-  Convección + Radiación emitida = Radiación solar absorbida + Calentamiento resistivo
-
-  Ampacidad = √((Qc + Qr − Qs) / R)
-
-  Qc = max(Qcn, Qc1, Qc2)   — convección natural y forzada (2 correlaciones), se toma el mayor
-  Qr = 17.8·D·ε·[((Tc+273)/100)⁴ − ((Ta+273)/100)⁴]   — radiación emitida
-  Qs = α·Qse·sen(θ)·D                                   — radiación solar absorbida
-  R  = interpolación lineal de la resistencia AC entre 25°C y 75°C, evaluada en Tc
-
-Nota: Qse (radiación solar total) y θ (ángulo efectivo de incidencia solar) se
-ingresan manualmente en esta calculadora. El cálculo de posición solar del
-estándar completo (a partir de fecha, hora y latitud) no está implementado.`;
-
-const FORMULAS_SUBTERRANEA = `Metodología IEC 60287-1-1 (régimen permanente):
-
-  Ampacidad = √( (Δθ − Wd·(0.5·T1 + n·(T2+T3+T4))) / (n·R·[T1/n + (1+λ1)·(T2+T3+T4)]) )
-
-  R  = resistencia AC del conductor, incluyendo efecto piel y de proximidad
-  Wd = pérdida dieléctrica del aislamiento
-  λ1 = factor de pérdidas por corrientes inducidas/circulantes en la pantalla
-  T1 = resistencia térmica del aislamiento
-  T2 = resistencia térmica de la cubierta/relleno
-  T3 = resistencia térmica de la chaqueta exterior
-  T4 = resistencia térmica externa (suelo + ducto), calculada con el método
-       de imágenes de Kennelly para el acoplamiento térmico entre el ducto
-       activo y los demás ductos del banco
-  Δθ = salto térmico admisible entre el conductor y el terreno
-
-Limitaciones conocidas:
-  • No distingue formación en trébol vs. formación plana — usa la misma
-    fórmula de proximidad para ambas.
-  • Solo calcula régimen permanente (no transitorio ni secado del suelo).`;
 
 const HINTS = {
   puestaTierra: "Unipuntual: en un extremo del cable.",
@@ -72,7 +39,7 @@ export async function render(container) {
 
     <form id="form-calc" novalidate>
       <div class="form-section card">
-        <div class="form-section-title">${icon("thermometer")} Tipo de instalación</div>
+        <div class="form-section-title">${icon("thermometerFill")} Tipo de instalación</div>
         <div class="field" style="margin-bottom: 0;">
           <label for="f-tipo-instalacion">Tipo de instalación</label>
           <select id="f-tipo-instalacion">
@@ -84,7 +51,7 @@ export async function render(container) {
 
       <div id="bloque-aerea">
         <div class="form-section card">
-          <div class="form-section-title">${icon("calculator")} Conductor</div>
+          <div class="form-section-title">${icon("calculatorFill")} Conductor</div>
           <div class="grid-2">
             <div class="field">
               <label for="fa-tipo">Tipo</label>
@@ -128,7 +95,7 @@ export async function render(container) {
         </div>
 
         <div class="form-section card">
-          <div class="form-section-title">${icon("thermometer")} Condiciones ambientales</div>
+          <div class="form-section-title">${icon("thermometerFill")} Condiciones ambientales</div>
           <div class="grid-2">
             <div class="field">
               <label for="fa-epsilon">Emisividad (ε)</label>
@@ -184,7 +151,7 @@ export async function render(container) {
 
       <div id="bloque-subterranea" hidden>
         <div class="form-section card">
-          <div class="form-section-title">${icon("calculator")} Cable</div>
+          <div class="form-section-title">${icon("calculatorFill")} Cable</div>
           <div class="grid-2">
             <div class="field">
               <label for="fs-tipocable">Tipo de cable</label>
@@ -241,7 +208,7 @@ export async function render(container) {
         </div>
 
         <div class="form-section card">
-          <div class="form-section-title">${icon("thermometer")} Condiciones de instalación</div>
+          <div class="form-section-title">${icon("thermometerFill")} Condiciones de instalación</div>
           <div class="grid-2">
             <div class="field">
               <label for="fs-tension">Tensión del sistema (kV, línea-línea)</label>
@@ -531,18 +498,18 @@ export async function render(container) {
     wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
-  function montarResultado(reporte, formulasHtml) {
+  function montarResultado(reporte) {
     const wrap = container.querySelector("#resultado-wrap");
     wrap.innerHTML = `
       <div class="card">
         <div class="tabs">
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
-          <button type="button" class="tab-btn" data-tab="formulas">Fórmulas</button>
+          <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
         </div>
         ${reporte}
-        <div class="tab-panel" data-panel="formulas" hidden>
-          <div class="formula-block">${escapeHtml(formulasHtml)}</div>
+        <div class="tab-panel" data-panel="criterios" hidden>
+          <div class="criterios-content">${renderCriterios(CRITERIOS_AMPACIDAD)}</div>
         </div>
       </div>
     `;
@@ -607,7 +574,7 @@ export async function render(container) {
       </div>
     `;
 
-    montarResultado(reporteHtml, FORMULAS_AEREA);
+    montarResultado(reporteHtml);
   }
 
   function renderResultadoSubterranea(data, p, ctx) {
@@ -683,6 +650,6 @@ export async function render(container) {
       </div>
     `;
 
-    montarResultado(reporteHtml, FORMULAS_SUBTERRANEA);
+    montarResultado(reporteHtml);
   }
 }
