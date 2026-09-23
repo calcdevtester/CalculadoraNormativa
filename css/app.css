@@ -308,6 +308,12 @@ input:disabled, select:disabled { opacity: 0.55; }
 .result-compare-fill.aparente { background: var(--accent); }
 .result-compare-fill.reactiva { background: var(--tertiary-green); }
 .result-compare-value { width: 150px; flex: 0 0 auto; text-align: right; font-size: 0.78rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+@media (max-width: 480px) {
+  .result-compare-row { flex-wrap: wrap; row-gap: 4px; }
+  .result-compare-label { width: auto; flex: 1 1 auto; }
+  .result-compare-value { width: auto; flex: 0 0 auto; }
+  .result-compare-track { flex: 1 1 100%; order: 3; }
+}
 
 .result-gauge-row { display: flex; gap: var(--space-5); align-items: center; flex-wrap: wrap; }
 .result-gauge { flex: 0 0 auto; position: relative; width: 180px; height: 100px; }
