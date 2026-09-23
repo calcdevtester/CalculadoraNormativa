@@ -316,9 +316,9 @@ input:disabled, select:disabled { opacity: 0.55; }
 }
 
 .result-gauge-row { display: flex; gap: var(--space-5); align-items: center; flex-wrap: wrap; }
-.result-gauge { flex: 0 0 auto; position: relative; width: 180px; height: 100px; }
-.result-gauge-svg { width: 100%; height: 100%; display: block; }
-.result-gauge-value { position: absolute; left: 0; right: 0; top: 42px; text-align: center; font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.result-gauge { flex: 0 0 auto; width: 180px; display: flex; flex-direction: column; align-items: center; }
+.result-gauge-svg { width: 100%; height: auto; display: block; }
+.result-gauge-value { margin-top: 2px; text-align: center; font-size: 1.4rem; font-weight: 800; color: var(--text); }
 .result-gauge-info { flex: 1 1 220px; min-width: 0; }
 .result-gauge-title { display: flex; align-items: center; gap: var(--space-2); font-size: 0.92rem; font-weight: 700; color: var(--text); margin-bottom: 4px; flex-wrap: wrap; }
 .result-gauge-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: var(--space-3); }
