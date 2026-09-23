@@ -505,7 +505,7 @@ export async function render(container) {
         <div class="tabs">
           <button type="button" class="tab-btn active" data-tab="resultado">Resultado</button>
           <button type="button" class="tab-btn" data-tab="reporte">Reporte</button>
-          <button type="button" class="tab-btn" data-tab="criterios">Criterios de cálculo</button>
+          <button type="button" class="tab-btn" data-tab="criterios">Criterios</button>
         </div>
         ${reporte}
         <div class="tab-panel" data-panel="criterios" hidden>
